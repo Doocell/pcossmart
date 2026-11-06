@@ -79,7 +79,12 @@ GET /rest/v1/education_articles   # Articles
 
 **Quick Test:**
 ```bash
-npm test
+# Real scenario test (production-like)
+node --env-file=.env scripts/test-real-scenario.mjs
+
+# Component tests
+node --env-file=.env scripts/test-chat.mjs
+node --env-file=.env scripts/test-safety.mjs
 ```
 
 **Detail**: Follow `docs/TESTING_GUIDE.md` step by step

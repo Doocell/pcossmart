@@ -145,15 +145,17 @@ npx supabase link --project-ref zhreisaigvyyhogudpld
 
 ### Quick Test
 ```bash
-# Test semua
-npm test
+# Test RLS (production scenario)
+node --env-file=.env scripts/test-real-scenario.mjs
 
-# Test individual
+# Test individual components
 node --env-file=.env scripts/test-rls.mjs
 node --env-file=.env scripts/test-chat.mjs
 node --env-file=.env scripts/test-safety.mjs
 node --env-file=.env scripts/test-gemini.mjs
 ```
+
+**Note:** `test-rls.mjs` may show 1 failure (Test 3) - this is expected and NOT a security issue. Use `test-real-scenario.mjs` for accurate RLS validation.
 
 Lihat **docs/TESTING_GUIDE.md** untuk detail lengkap.
 

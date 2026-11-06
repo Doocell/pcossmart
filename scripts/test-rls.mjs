@@ -14,7 +14,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false, // Don't persist session - fresh anon client every time
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+});
 
 console.log('🧪 Testing Row Level Security (RLS) Policies\n');
 console.log('📍 Supabase URL:', supabaseUrl);
@@ -69,6 +75,10 @@ async function testUnauthenticatedCheckIn() {
 async function testUnauthenticatedChatRead() {
   console.log('--- Test 3: Unauthenticated user cannot read chat messages ---');
   
+  // First check current auth state
+  const { data: { user } } = await supabase.auth.getUser();
+  console.log('   Current auth user:', user ? user.id : 'null (not authenticated)');
+  
   const { data, error } = await supabase
     .from('chat_messages')
     .select('*');
@@ -87,6 +97,7 @@ async function testUnauthenticatedChatRead() {
   
   console.error('❌ Unexpected: Got chat messages when user is not authenticated');
   console.error('   Data count:', data.length);
+  console.error('   First message user_id:', data[0]?.user_id);
   console.log();
   return false;
 }
