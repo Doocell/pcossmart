@@ -113,7 +113,7 @@ export async function callGemini(
   tasks: string[],
 ): Promise<GeminiResponse> {
   const apiKey = Deno.env.get('GEMINI_API_KEY')
-  const model = Deno.env.get('GEMINI_MODEL') || 'gemini-1.5-flash'
+  const model = Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash'
 
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY not configured')
@@ -122,7 +122,7 @@ export async function callGemini(
   const systemPrompt = buildSystemPrompt()
   const userPrompt = buildUserPrompt(message, context, mode, tasks)
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+  const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`
 
   const requestBody = {
     contents: [
