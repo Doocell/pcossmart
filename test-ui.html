@@ -382,10 +382,10 @@
                         'apikey': config.key,
                         'Authorization': `Bearer ${accessToken}`,
                         'Content-Type': 'application/json',
-                        'Prefer': 'return=representation'
+                        'Prefer': 'resolution=merge-duplicates,return=representation'
                     },
                     body: JSON.stringify({
-                        user_id: userId,
+                        id: userId,
                         full_name: name,
                         consent_at: new Date().toISOString()
                     })
@@ -409,7 +409,7 @@
             if (!config) return;
             
             try {
-                const response = await fetch(`${config.url}/rest/v1/profiles?user_id=eq.${userId}`, {
+                const response = await fetch(`${config.url}/rest/v1/profiles?id=eq.${userId}`, {
                     headers: {
                         'apikey': config.key,
                         'Authorization': `Bearer ${accessToken}`
