@@ -520,7 +520,7 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    addChatMessage('assistant', data.reply);
+                    addChatMessage('model', data.reply);
                     showResponse('chatResponse', data, true);
                 } else {
                     showResponse('chatResponse', data, false);

@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
           },
           {
             user_id: user.id,
-            role: 'assistant',
+            role: 'model',
             content: crisisReplyText,
             flag_level: 'crisis',
             meta: { card: null, sources: [] },
@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
       return json({
         user_message_id: saved!.find((m) => m.role === 'user')!.id,
         reply: {
-          id: saved!.find((m) => m.role === 'assistant')!.id,
+          id: saved!.find((m) => m.role === 'model')!.id,
           text: crisisReplyText,
           card: null,
           sources: [],
@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
         },
         {
           user_id: user.id,
-          role: 'assistant',
+          role: 'model',
           content: llmResponse.text,
           flag_level: level,
           meta: { card: llmResponse.card, sources: llmResponse.sources },
@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
     return json({
       user_message_id: savedMsgs!.find((m) => m.role === 'user')!.id,
       reply: {
-        id: savedMsgs!.find((m) => m.role === 'assistant')!.id,
+        id: savedMsgs!.find((m) => m.role === 'model')!.id,
         text: llmResponse.text,
         card: llmResponse.card,
         sources: llmResponse.sources,
