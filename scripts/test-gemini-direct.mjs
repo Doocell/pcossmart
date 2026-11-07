@@ -65,13 +65,18 @@ try {
 
   const data = await response.json()
   
+  console.log('📄 Full response:', JSON.stringify(data, null, 2))
+  console.log()
+  
   if (data.candidates && data.candidates[0]) {
     const text = data.candidates[0].content.parts[0].text
     console.log('✅ Success! Gemini API is working!\n')
     console.log('Response:', text)
     console.log('\n🎉 Your Gemini API key is valid and working correctly!')
   } else {
-    console.log('⚠️  Unexpected response structure:', JSON.stringify(data, null, 2))
+    console.log('⚠️  Unexpected response structure')
+    console.log('   Candidates:', data.candidates)
+    console.log('   Prompt feedback:', data.promptFeedback)
   }
 } catch (error) {
   console.error('❌ Error calling Gemini API:', error.message)
