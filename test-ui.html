@@ -520,7 +520,17 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    addChatMessage('model', data.reply);
+                    // Handle reply - could be string or object
+                    let replyText = '';
+                    if (typeof data.reply === 'string') {
+                        replyText = data.reply;
+                    } else if (data.reply && data.reply.text) {
+                        replyText = data.reply.text;
+                    } else {
+                        replyText = JSON.stringify(data.reply);
+                    }
+                    
+                    addChatMessage('model', replyText);
                     showResponse('chatResponse', data, true);
                 } else {
                     showResponse('chatResponse', data, false);
