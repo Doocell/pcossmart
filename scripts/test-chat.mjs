@@ -36,7 +36,8 @@ async function getOrCreateUser(email, password, withConsent = false) {
     if (user) {
       const { error: profileError } = await sb.from('profiles').upsert({
         id: user.id,
-        full_name: email.split('@')[0],
+                nickname: email.split('@')[0].slice(0, 30),
+        age_range: '18-24',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })

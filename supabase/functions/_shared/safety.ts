@@ -9,7 +9,7 @@ export interface SafetyResult {
   reason?: string
 }
 
-// Kata kunci untuk deteksi krisis
+// TODO: samakan dengan daftar resmi PRD Bagian 8.3 (daftar ini masih sementara)
 const CRISIS_KEYWORDS = [
   'bunuh diri',
   'ingin mati',
@@ -21,12 +21,7 @@ const CRISIS_KEYWORDS = [
   'lebih baik mati',
 ]
 
-const SEVERE_KEYWORDS = [
-  'menyakiti diri',
-  'self harm',
-  'melukai diri',
-  'menyayat',
-]
+const SEVERE_KEYWORDS = ['menyakiti diri', 'self harm', 'melukai diri', 'menyayat']
 
 const WARNING_KEYWORDS = [
   'putus asa',
@@ -36,107 +31,43 @@ const WARNING_KEYWORDS = [
   'sangat tertekan',
 ]
 
-/**
- * Check message for crisis/safety keywords
- */
 export function checkSafety(message: string): SafetyResult {
-  const lowerMessage = message.toLowerCase()
+  const lower = message.toLowerCase()
 
-  // Check crisis level
-  for (const keyword of CRISIS_KEYWORDS) {
-    if (lowerMessage.includes(keyword)) {
-      return {
-        level: 'crisis',
-        reason: `Crisis keyword detected: ${keyword}`,
-      }
-    }
+  for (const k of CRISIS_KEYWORDS) {
+    if (lower.includes(k)) return { level: 'crisis', reason: k }
   }
-
-  // Check severe level
-  for (const keyword of SEVERE_KEYWORDS) {
-    if (lowerMessage.includes(keyword)) {
-      return {
-        level: 'severe',
-        reason: `Severe keyword detected: ${keyword}`,
-      }
-    }
+  for (const k of SEVERE_KEYWORDS) {
+    if (lower.includes(k)) return { level: 'severe', reason: k }
   }
-
-  // Check warning level
-  for (const keyword of WARNING_KEYWORDS) {
-    if (lowerMessage.includes(keyword)) {
-      return {
-        level: 'warning',
-        reason: `Warning keyword detected: ${keyword}`,
-      }
-    }
+  for (const k of WARNING_KEYWORDS) {
+    if (lower.includes(k)) return { level: 'warning', reason: k }
   }
-
   return { level: 'none' }
 }
 
-/**
- * Get crisis banner message
- */
-export function getCrisisBanner() {
-  return {
-    type: 'crisis' as const,
-    title: 'Kami peduli denganmu',
-    message:
-      'Jika kamu dalam keadaan darurat, silakan hubungi layanan krisis:\n\n' +
-      '🆘 Hotline 119 (24/7)\n' +
-      '📞 Into The Light: 1500-454\n' +
-      '💬 Sejiwa: 119 ext 8',
-    actions: [
-      {
-        label: 'Hubungi 119',
-        type: 'tel',
-        value: '119',
-      },
-    ],
-  }
-}
+// Teks balasan krisis dikendalikan server (kontrak 6.4).
+// Nomor kontak SENGAJA tidak ditulis di sini: kontrak menaruhnya di FE (src/config/crisis.js)
+// setelah diverifikasi.
+export const CRISIS_REPLY_TEXT =
+  'Terima kasih sudah berbagi. Kamu tidak sendirian. Yuk bicara dengan tenaga profesional atau orang yang kamu percaya sekarang.'
 
-/**
- * Get severe banner message
- */
-export function getSevereBanner() {
-  return {
-    type: 'severe' as const,
-    title: 'Kami di sini untukmu',
-    message:
-      'Sepertinya kamu sedang mengalami masa sulit. Pertimbangkan untuk berbicara dengan profesional:\n\n' +
-      '📞 Hotline 119\n' +
-      '💬 Sejiwa: 119 ext 8',
-    actions: [],
-  }
-}
-
-/**
- * Get warning banner message
- */
-export function getWarningBanner() {
-  return {
-    type: 'warning' as const,
-    title: 'Jaga dirimu ya',
-    message:
-      'Kalau kamu merasa kewalahan, tidak apa-apa untuk mencari bantuan. ' +
-      'Kamu bisa hubungi layanan konseling atau berbicara dengan orang terdekat.',
-    actions: [],
-  }
-}
-
-/**
- * Get appropriate banner based on flag level
- */
+// Bentuk banner sesuai kontrak 6.2: { type, title, body }, type = see_doctor | crisis
 export function getBanner(level: FlagLevel) {
   switch (level) {
     case 'crisis':
-      return getCrisisBanner()
+      return {
+        type: 'crisis' as const,
+        title: 'Kamu tidak sendirian',
+        body: 'Hubungi tenaga profesional atau orang terdekat sekarang.',
+      }
     case 'severe':
-      return getSevereBanner()
     case 'warning':
-      return getWarningBanner()
+      return {
+        type: 'see_doctor' as const,
+        title: 'Sebaiknya periksa ke dokter',
+        body: 'Keluhanmu perlu diperhatikan. Pertimbangkan berkonsultasi dengan dokter atau tenaga profesional.',
+      }
     default:
       return null
   }

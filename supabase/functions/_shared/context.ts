@@ -39,7 +39,7 @@ export async function getTodayCheckin(
   supabase: any,
   userId: string,
 ): Promise<any | null> {
-  const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+    const today = new Date(Date.now() + 7 * 3600_000).toISOString().split('T')[0] // tanggal WIB
 
   const { data, error } = await supabase
     .from('daily_checkins')

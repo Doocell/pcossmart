@@ -106,6 +106,27 @@ function buildUserPrompt(
 /**
  * Call Gemini API
  */
+async function postGemini(
+  url: string,
+  apiKey: string,
+  body: unknown,
+  signal: AbortSignal,
+): Promise<Response> {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify(body),
+      signal,
+    })
+    if (res.ok || ![429, 500, 503].includes(res.status) || attempt === 2) return res
+    console.warn(`Gemini ${res.status}, retry...`)
+    await res.body?.cancel()
+    await new Promise((r) => setTimeout(r, 1000))
+  }
+  throw new Error('unreachable')
+}
+
 export async function callGemini(
   message: string,
   context: ChatContext,
@@ -122,7 +143,7 @@ export async function callGemini(
   const systemPrompt = buildSystemPrompt()
   const userPrompt = buildUserPrompt(message, context, mode, tasks)
 
-  const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`
+    const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`
 
   const requestBody = {
     contents: [
@@ -145,14 +166,7 @@ export async function callGemini(
   const timeoutId = setTimeout(() => controller.abort(), 20000) // 20 detik timeout
 
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal,
-    })
+    const response = await postGemini(url, apiKey, requestBody, controller.signal)
 
     clearTimeout(timeoutId)
 
@@ -165,9 +179,11 @@ export async function callGemini(
     const data = await response.json()
 
     // Parse response
-    const text =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      'Maaf, tidak ada respons.'
+      const text =
+      (data.candidates?.[0]?.content?.parts ?? [])
+        .map((p: { text?: string }) => p.text ?? '')
+        .join('')
+        .trim() || 'Maaf, tidak ada respons.'
 
     // Jika mode recommendation, coba parse JSON
     let card = null

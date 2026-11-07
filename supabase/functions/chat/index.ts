@@ -1,6 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders, json, errorResponse } from '../_shared/http.ts'
-import { checkSafety, getBanner } from '../_shared/safety.ts'
+import { checkSafety, getBanner, CRISIS_REPLY_TEXT } from '../_shared/safety.ts'
 import { assembleContext } from '../_shared/context.ts'
 import { callLLM } from '../_shared/gemini.ts'
 
@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
     
     if (level === 'crisis') {
       const now = Date.now()
-      const crisisReplyText = 'Aku sangat peduli denganmu. Mohon hubungi layanan krisis segera: Hotline 119 (24/7) atau Into The Light: 1500-454.'
+            const crisisReplyText = CRISIS_REPLY_TEXT
       
       // created_at dibuat eksplisit supaya urutan riwayat pasti (user dulu, lalu model)
       const { data: saved, error: saveError } = await admin
