@@ -63,8 +63,8 @@ export async function getLast7DaysSummary(
   supabase: any,
   userId: string,
 ): Promise<string> {
-  const today = new Date()
-  const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const wibNow = Date.now() + 7 * 3600_000 // WIB
+  const sevenDaysAgo = new Date(wibNow - 7 * 24 * 60 * 60 * 1000)
   const fromDate = sevenDaysAgo.toISOString().split('T')[0]
 
   const { data, error } = await supabase
