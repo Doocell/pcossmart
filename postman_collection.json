@@ -1,0 +1,399 @@
+{
+  "info": {
+    "name": "PCOSmart Backend API",
+    "_postman_id": "pcosmart-backend-v1",
+    "description": "Complete API testing for PCOSmart backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://zhreisaigvyyhogudpld.supabase.co",
+      "type": "string"
+    },
+    {
+      "key": "anon_key",
+      "value": "YOUR_ANON_KEY_HERE",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Sign Up",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', jsonData.access_token);",
+                  "    pm.collectionVariables.set('user_id', jsonData.user.id);",
+                  "    console.log('Token saved:', jsonData.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{anon_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\",\n  \"password\": \"DemoPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/v1/signup",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "v1", "signup"]
+            }
+          }
+        },
+        {
+          "name": "Sign In",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', jsonData.access_token);",
+                  "    pm.collectionVariables.set('user_id', jsonData.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{anon_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\",\n  \"password\": \"DemoPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/v1/token?grant_type=password",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "v1", "token"],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Profile",
+      "item": [
+        {
+          "name": "Create Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{anon_key}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Prefer",
+                "value": "return=representation"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"name\": \"Demo User\",\n  \"birth_date\": \"2000-01-15\",\n  \"consent_at\": \"2026-11-07T10:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rest/v1/profiles",
+              "host": ["{{base_url}}"],
+              "path": ["rest", "v1", "profiles"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{anon_key}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rest/v1/profiles?user_id=eq.{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["rest", "v1", "profiles"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "eq.{{user_id}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Daily Check-ins",
+      "item": [
+        {
+          "name": "Create Check-in",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{anon_key}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Prefer",
+                "value": "return=representation"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"date\": \"2026-11-07\",\n  \"period_day\": 3,\n  \"symptoms\": [\"cramps\", \"bloating\", \"fatigue\"],\n  \"energy_level\": 3,\n  \"mood_notes\": \"Feeling okay, a bit tired\",\n  \"sleep_hours\": 7.5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rest/v1/daily_checkins",
+              "host": ["{{base_url}}"],
+              "path": ["rest", "v1", "daily_checkins"]
+            }
+          }
+        },
+        {
+          "name": "Get Check-ins (Last 7 days)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{anon_key}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rest/v1/daily_checkins?user_id=eq.{{user_id}}&order=date.desc&limit=7",
+              "host": ["{{base_url}}"],
+              "path": ["rest", "v1", "daily_checkins"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "eq.{{user_id}}"
+                },
+                {
+                  "key": "order",
+                  "value": "date.desc"
+                },
+                {
+                  "key": "limit",
+                  "value": "7"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. AI Chatbot",
+      "item": [
+        {
+          "name": "Chat - Normal Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Halo! Aku merasa kembung hari ini, apa yang bisa aku lakukan?\",\n  \"mode\": \"chat\",\n  \"tasks\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/functions/v1/chat",
+              "host": ["{{base_url}}"],
+              "path": ["functions", "v1", "chat"]
+            }
+          }
+        },
+        {
+          "name": "Chat - With Context",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Bagaimana tren energi saya minggu ini?\",\n  \"mode\": \"chat\",\n  \"tasks\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/functions/v1/chat",
+              "host": ["{{base_url}}"],
+              "path": ["functions", "v1", "chat"]
+            }
+          }
+        },
+        {
+          "name": "Chat - Crisis Message (Test)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Saya merasa sangat sedih\",\n  \"mode\": \"chat\",\n  \"tasks\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/functions/v1/chat",
+              "host": ["{{base_url}}"],
+              "path": ["functions", "v1", "chat"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Education Articles",
+      "item": [
+        {
+          "name": "Get All Published Articles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{anon_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rest/v1/education_articles?status=eq.published&order=created_at.desc",
+              "host": ["{{base_url}}"],
+              "path": ["rest", "v1", "education_articles"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "eq.published"
+                },
+                {
+                  "key": "order",
+                  "value": "created_at.desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Articles by Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{anon_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rest/v1/education_articles?category=eq.nutrition&status=eq.published",
+              "host": ["{{base_url}}"],
+              "path": ["rest", "v1", "education_articles"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "eq.nutrition"
+                },
+                {
+                  "key": "status",
+                  "value": "eq.published"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

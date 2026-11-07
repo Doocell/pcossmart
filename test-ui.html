@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCOSmart Backend Test UI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .section:last-child {
+            border-bottom: none;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input[type="email"],
+        input[type="password"],
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .response {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+        
+        .response.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .response.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+        
+        .response pre {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .chat-messages {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .message.user {
+            background: #e3f2fd;
+            text-align: right;
+        }
+        
+        .message.assistant {
+            background: #f5f5f5;
+        }
+        
+        .message strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .status {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        
+        .status.connected {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status.disconnected {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌸 PCOSmart Backend Test UI</h1>
+            <p>Manual Testing Interface - Backend API v1.0</p>
+        </div>
+        
+        <div class="content">
+            <!-- Config Section -->
+            <div class="section">
+                <h2>⚙️ Configuration</h2>
+                <div class="input-group">
+                    <label>Supabase URL:</label>
+                    <input type="text" id="supabaseUrl" value="https://zhreisaigvyyhogudpld.supabase.co" readonly>
+                </div>
+                <div class="input-group">
+                    <label>Anon Key (paste from .env):</label>
+                    <input type="text" id="anonKey" placeholder="Paste VITE_SUPABASE_ANON_KEY here">
+                </div>
+                <div id="configStatus" class="status disconnected">⚠️ Not Configured</div>
+            </div>
+            
+            <!-- Authentication Section -->
+            <div class="section">
+                <h2>🔐 Authentication</h2>
+                <div class="input-group">
+                    <label>Email:</label>
+                    <input type="email" id="email" value="demo@example.com">
+                </div>
+                <div class="input-group">
+                    <label>Password:</label>
+                    <input type="password" id="password" value="DemoPassword123!">
+                </div>
+                <button onclick="signUp()">Sign Up</button>
+                <button onclick="signIn()">Sign In</button>
+                <div id="authResponse"></div>
+            </div>
+            
+            <!-- Profile Section -->
+            <div class="section">
+                <h2>👤 Profile</h2>
+                <div class="input-group">
+                    <label>Name:</label>
+                    <input type="text" id="profileName" value="Demo User">
+                </div>
+                <button onclick="createProfile()">Create/Update Profile</button>
+                <button onclick="getProfile()">Get Profile</button>
+                <div id="profileResponse"></div>
+            </div>
+            
+            <!-- Check-in Section -->
+            <div class="section">
+                <h2>📊 Daily Check-in</h2>
+                <button onclick="createCheckin()">Submit Today's Check-in</button>
+                <button onclick="getCheckins()">Get My Check-ins</button>
+                <div id="checkinResponse"></div>
+            </div>
+            
+            <!-- Chat Section -->
+            <div class="section">
+                <h2>💬 AI Chatbot</h2>
+                <div class="chat-messages" id="chatMessages">
+                    <p style="text-align: center; color: #999;">No messages yet. Send a message to start!</p>
+                </div>
+                <div class="input-group">
+                    <label>Your Message:</label>
+                    <textarea id="chatMessage" placeholder="Type your message here...">Halo! Aku merasa kembung hari ini, apa yang bisa aku lakukan?</textarea>
+                </div>
+                <button onclick="sendChat()">Send Message</button>
+                <div id="chatResponse"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let accessToken = '';
+        let userId = '';
+        
+        // Get config
+        function getConfig() {
+            const url = document.getElementById('supabaseUrl').value;
+            const key = document.getElementById('anonKey').value;
+            
+            if (!key) {
+                alert('Please paste Anon Key first!');
+                return null;
+            }
+            
+            document.getElementById('configStatus').className = 'status connected';
+            document.getElementById('configStatus').textContent = '✅ Configured';
+            
+            return { url, key };
+        }
+        
+        // Sign Up
+        async function signUp() {
+            const config = getConfig();
+            if (!config) return;
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch(`${config.url}/auth/v1/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': config.key,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    accessToken = data.access_token;
+                    userId = data.user.id;
+                    showResponse('authResponse', data, true);
+                } else {
+                    showResponse('authResponse', data, false);
+                }
+            } catch (error) {
+                showResponse('authResponse', { error: error.message }, false);
+            }
+        }
+        
+        // Sign In
+        async function signIn() {
+            const config = getConfig();
+            if (!config) return;
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch(`${config.url}/auth/v1/token?grant_type=password`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': config.key,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    accessToken = data.access_token;
+                    userId = data.user.id;
+                    showResponse('authResponse', data, true);
+                } else {
+                    showResponse('authResponse', data, false);
+                }
+            } catch (error) {
+                showResponse('authResponse', { error: error.message }, false);
+            }
+        }
+        
+        // Create Profile
+        async function createProfile() {
+            if (!accessToken) {
+                alert('Please Sign In first!');
+                return;
+            }
+            
+            const config = getConfig();
+            if (!config) return;
+            
+            const name = document.getElementById('profileName').value;
+            
+            try {
+                const response = await fetch(`${config.url}/rest/v1/profiles`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': config.key,
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        name: name,
+                        birth_date: '2000-01-15',
+                        consent_at: new Date().toISOString()
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('profileResponse', data, response.ok);
+            } catch (error) {
+                showResponse('profileResponse', { error: error.message }, false);
+            }
+        }
+        
+        // Get Profile
+        async function getProfile() {
+            if (!accessToken) {
+                alert('Please Sign In first!');
+                return;
+            }
+            
+            const config = getConfig();
+            if (!config) return;
+            
+            try {
+                const response = await fetch(`${config.url}/rest/v1/profiles?user_id=eq.${userId}`, {
+                    headers: {
+                        'apikey': config.key,
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('profileResponse', data, response.ok);
+            } catch (error) {
+                showResponse('profileResponse', { error: error.message }, false);
+            }
+        }
+        
+        // Create Check-in
+        async function createCheckin() {
+            if (!accessToken) {
+                alert('Please Sign In first!');
+                return;
+            }
+            
+            const config = getConfig();
+            if (!config) return;
+            
+            const today = new Date().toISOString().split('T')[0];
+            
+            try {
+                const response = await fetch(`${config.url}/rest/v1/daily_checkins`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': config.key,
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        date: today,
+                        period_day: 3,
+                        symptoms: ['cramps', 'bloating'],
+                        energy_level: 3,
+                        mood_notes: 'Feeling okay',
+                        sleep_hours: 7.5
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('checkinResponse', data, response.ok);
+            } catch (error) {
+                showResponse('checkinResponse', { error: error.message }, false);
+            }
+        }
+        
+        // Get Check-ins
+        async function getCheckins() {
+            if (!accessToken) {
+                alert('Please Sign In first!');
+                return;
+            }
+            
+            const config = getConfig();
+            if (!config) return;
+            
+            try {
+                const response = await fetch(`${config.url}/rest/v1/daily_checkins?user_id=eq.${userId}&order=date.desc&limit=7`, {
+                    headers: {
+                        'apikey': config.key,
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                showResponse('checkinResponse', data, response.ok);
+            } catch (error) {
+                showResponse('checkinResponse', { error: error.message }, false);
+            }
+        }
+        
+        // Send Chat
+        async function sendChat() {
+            if (!accessToken) {
+                alert('Please Sign In first!');
+                return;
+            }
+            
+            const config = getConfig();
+            if (!config) return;
+            
+            const message = document.getElementById('chatMessage').value;
+            
+            // Show user message
+            addChatMessage('user', message);
+            
+            try {
+                const response = await fetch(`${config.url}/functions/v1/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        mode: 'chat',
+                        tasks: []
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addChatMessage('assistant', data.reply);
+                    showResponse('chatResponse', data, true);
+                } else {
+                    showResponse('chatResponse', data, false);
+                }
+            } catch (error) {
+                showResponse('chatResponse', { error: error.message }, false);
+            }
+        }
+        
+        // Add message to chat
+        function addChatMessage(role, content) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // Clear placeholder
+            if (chatMessages.querySelector('p')) {
+                chatMessages.innerHTML = '';
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.innerHTML = `<strong>${role === 'user' ? 'You' : 'AI Assistant'}</strong>${content}`;
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Show response
+        function showResponse(elementId, data, success) {
+            const element = document.getElementById(elementId);
+            element.className = `response ${success ? 'success' : 'error'}`;
+            element.innerHTML = `<strong>${success ? '✅ Success' : '❌ Error'}</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+    </script>
+</body>
+</html>
