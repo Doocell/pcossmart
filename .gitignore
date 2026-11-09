@@ -3,11 +3,14 @@ node_modules/
 
 # Environment variables
 .env
+.env.*
+!.env.example
 .env.local
 
 # Supabase
 supabase/.branches/
 supabase/.temp/
+supabase/.env
 
 # IDE
 .vscode/
