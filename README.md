@@ -51,7 +51,8 @@ npm test
 
 ## 📚 Documentation
 
-- **[FINAL_SUMMARY.md](FINAL_SUMMARY.md)** - Complete project overview & stats
+- **[docs/api-contract.md](docs/api-contract.md)** - API reference & contract compliance
+- **[docs/decisions.md](docs/decisions.md)** - Architecture decision records
 - **[docs/HANDOVER.md](docs/HANDOVER.md)** - Comprehensive team handover guide
 - **[docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md)** - Testing instructions & examples
 - **[docs/QUICK_START_TEAM.md](docs/QUICK_START_TEAM.md)** - Quick start for team members
