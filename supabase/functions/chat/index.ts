@@ -187,11 +187,6 @@ Deno.serve(async (req) => {
       throw error
     }
 
-    // 7. Check if card mode but no checkin today
-    let suggestedAction = null
-    if (mode === 'recommendation' && !context.todayCheckin && !llmResponse.card) {
-      suggestedAction = 'open_checkin'
-    }
 
     // 8. Save messages
     const now = Date.now()
@@ -218,7 +213,7 @@ Deno.serve(async (req) => {
 
     if (saveMsgsError) throw saveMsgsError
 
-    // 9. Return response
+    // 8. Return response
     return json({
       user_message_id: savedMsgs!.find((m) => m.role === 'user')!.id,
       reply: {
@@ -226,7 +221,7 @@ Deno.serve(async (req) => {
         text: llmResponse.text,
         card: llmResponse.card,
         sources: llmResponse.sources,
-        suggested_action: suggestedAction,
+        suggested_action: null,
       },
       flag: { level, banner },
       usage: { remaining_this_hour: remaining },
