@@ -15,4 +15,4 @@ const i1 = await sb.from('daily_checkins').insert({
 check('Anon tidak bisa insert check-in', !!i1.error)
 
 const i2 = await sb.from('chat_messages').insert({ user_id: fake, role: 'user', content: 'x' })
-check('Anon tidak bisa insert chat', !!i2.error)s
+check('Anon tidak bisa insert chat', !!i2.error)
