@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens PCOSmart.
+ * Sumber: sampling warna dari PDF ekspor Figma (PCOSmart.pdf). Font, radius, dan
+ * bayangan adalah estimasi dari render PDF. Sesuaikan jika UI/UX memberi token resmi.
+ */
+@theme {
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+
+  /* Latar dan permukaan */
+  --color-background: #fff7ff;
+  --color-surface: #ffffff;
+  --color-tint: #f8f0fc;
+  --color-tint-strong: #f0e4f9;
+  --color-lilac: #e8dcf4;
+
+  /* Brand */
+  --color-primary: #54309c;
+  --color-primary-light: #6c48b4;
+
+  /* Teks */
+  --color-ink: #1c1824;
+  --color-ink-muted: #484450;
+  --color-ink-subtle: #787480;
+
+  /* Aksen */
+  --color-teal: #006860;
+  --color-teal-soft: #d4f4f4;
+  --color-mint: #98f0e4;
+  --color-peach: #fcd8d0;
+  --color-clay: #783018;
+
+  /* Bentuk: tombol dan chip berbentuk pil (rounded-full), kartu dan input membulat */
+  --radius-card: 1.25rem;
+  --radius-field: 1rem;
+
+  --shadow-card: 0 4px 24px -4px rgb(84 48 156 / 0.1);
+  --shadow-button: 0 6px 16px -4px rgb(84 48 156 / 0.35);
+}
+
+@layer base {
+  :root {
+    /* Figma hanya menyediakan tema terang. */
+    color-scheme: light;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
