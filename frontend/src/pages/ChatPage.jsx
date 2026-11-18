@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { sendChatMessage, supabase } from "../lib/supabase";
+import { compressMealImageFile } from "../lib/imageUtils";
+import MealScoreCard from "../components/MealScoreCard";
 import { useAuth } from "../contexts/AuthContext";
 import {
   SYMPTOM_LABELS,
@@ -95,6 +97,9 @@ export default function ChatPage() {
   const [todayCheckin, setTodayCheckin] = useState(null);
   const [remainingQuota, setRemainingQuota] = useState(20);
   const [inputText, setInputText] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [compressingImage, setCompressingImage] = useState(false);
+  const [localPhotoPreviews, setLocalPhotoPreviews] = useState({});
   const [sending, setSending] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(Boolean(user));
   const [errorBanner, setErrorBanner] = useState("");
@@ -136,6 +141,7 @@ export default function ChatPage() {
   const messagesEndRef = useRef(null);
   const recCardRef = useRef(null);
   const taskInputRef = useRef(null);
+  const fileInputRef = useRef(null);
   const autoTriggeredRef = useRef(false);
 
   const todayStr = getTodayDateString();
@@ -152,7 +158,7 @@ export default function ChatPage() {
             .from("chat_messages")
             .select("*")
             .eq("user_id", user.id)
-            .order("created_at", { ascending: true })
+            .order("created_at", { ascending: false })
             .limit(50),
           supabase
             .from("daily_checkins")
@@ -163,7 +169,7 @@ export default function ChatPage() {
         ]);
 
         if (!active) return;
-        const loadedMsgs = msgRows || [];
+        const loadedMsgs = [...(msgRows || [])].reverse();
         setMessages(loadedMsgs);
         setTodayCheckin(checkinRows || null);
 
@@ -194,10 +200,37 @@ export default function ChatPage() {
     };
   }, [user, todayStr]);
 
+  const openMealPhotoPicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleSelectMealPhoto = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setErrorBanner("");
+    setCompressingImage(true);
+    try {
+      const compressed = await compressMealImageFile(file);
+      setSelectedImage(compressed);
+    } catch (err) {
+      setErrorBanner(
+        err.message || "Gagal memproses foto makanan. Coba pilih foto JPEG/PNG lain."
+      );
+    } finally {
+      setCompressingImage(false);
+    }
+  };
+
+  const contextArticleId = location.state?.contextArticleId || null;
+
   const handleSend = useCallback(
     async (overrideText = null, mode = "free", customTasks = []) => {
+      const activeImage = overrideText === null ? selectedImage : null;
+      const effectiveMode = activeImage ? "meal_analysis" : mode;
       const text = (overrideText !== null ? overrideText : inputText).trim();
-      if (!text || sending) return;
+      if ((!text && !activeImage) || sending || compressingImage) return;
       if (remainingQuota <= 0) {
         setErrorBanner(
           "Kamu terlalu cepat (batas 20 pesan/jam tercapai). Coba lagi sebentar ya."
@@ -206,15 +239,28 @@ export default function ChatPage() {
       }
 
       setErrorBanner("");
-      if (overrideText === null) setInputText("");
+      if (overrideText === null) {
+        setInputText("");
+        setSelectedImage(null);
+      }
       setSending(true);
 
       // Optimistic user message
       const tempId = `temp-${Date.now()}`;
+      if (activeImage) {
+        setLocalPhotoPreviews((prev) => ({
+          ...prev,
+          [tempId]: activeImage.previewDataUrl,
+        }));
+      }
       const optimisticUserMsg = {
         id: tempId,
         role: "user",
-        content: text,
+        content: activeImage
+          ? text
+            ? `[Foto Makanan]\n${text}`
+            : "[Foto Makanan]"
+          : text,
         flag_level: "none",
         created_at: new Date().toISOString(),
       };
@@ -223,10 +269,20 @@ export default function ChatPage() {
       try {
         const res = await sendChatMessage({
           message: text,
-          mode,
-          context_article_id: location.state?.contextArticleId || null,
+          mode: effectiveMode,
+          context_article_id: contextArticleId,
           tasks: customTasks,
+          image: activeImage
+            ? { mime_type: activeImage.mime_type, data: activeImage.data }
+            : null,
         });
+
+        if (activeImage && res.user_message_id) {
+          setLocalPhotoPreviews((prev) => ({
+            ...prev,
+            [res.user_message_id]: activeImage.previewDataUrl,
+          }));
+        }
 
         const modelMessage = {
           id: res.reply.id,
@@ -235,6 +291,7 @@ export default function ChatPage() {
           flag_level: res.flag?.level || "none",
           meta: {
             card: res.reply.card || null,
+            meal_analysis: res.reply.meal_analysis || null,
             sources: res.reply.sources || [],
             suggested_action: res.reply.suggested_action || null,
             banner: res.flag?.banner || null,
@@ -244,7 +301,13 @@ export default function ChatPage() {
 
         setMessages((prev) => [
           ...prev.map((m) =>
-            m.id === tempId ? { ...m, id: res.user_message_id } : m
+            m.id === tempId
+              ? {
+                  ...m,
+                  id: res.user_message_id,
+                  content: res.user_message_content || m.content,
+                }
+              : m
           ),
           modelMessage,
         ]);
@@ -261,6 +324,9 @@ export default function ChatPage() {
         }
       } catch (err) {
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        if (overrideText === null && activeImage) {
+          setSelectedImage(activeImage);
+        }
         if (err.code === "CONSENT_REQUIRED" || err.status === 403) {
           navigate("/onboarding");
           return;
@@ -274,7 +340,15 @@ export default function ChatPage() {
         setSending(false);
       }
     },
-    [inputText, sending, remainingQuota, location.state?.contextArticleId, navigate]
+    [
+      inputText,
+      selectedImage,
+      compressingImage,
+      sending,
+      remainingQuota,
+      contextArticleId,
+      navigate,
+    ]
   );
 
   // Handle auto-recommendation trigger when coming from CheckinPage or Education/History prefill
@@ -323,6 +397,8 @@ export default function ChatPage() {
     }
     setMessages([]);
     setPinnedCard(null);
+    setSelectedImage(null);
+    setLocalPhotoPreviews({});
     setCrisisModeActive(false);
   };
 
@@ -770,6 +846,14 @@ export default function ChatPage() {
               Topik Pendukung & Skenario Uji
             </span>
             <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={openMealPhotoPicker}
+                className="px-2.5 py-1 rounded-full bg-secondary-container/70 text-on-secondary-container font-label-sm text-label-sm font-semibold hover:bg-secondary-container transition-colors flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-[15px]">photo_camera</span>
+                <span>Analisis Foto Makanan</span>
+              </button>
               {SUPPORT_TOPICS.map((topic, i) => (
                 <button
                   key={i}
@@ -1001,16 +1085,44 @@ export default function ChatPage() {
 
               {messages.map((msg) => {
                 if (msg.role === "user") {
+                  const previewUrl = localPhotoPreviews[msg.id];
+                  const rawContent = String(msg.content || "");
+                  const hasPhotoTag =
+                    rawContent.startsWith("[Foto Makanan") ||
+                    rawContent.startsWith("[Foto Bukan Makanan");
+                  const [firstLine, ...restLines] = rawContent.split("\n");
+                  const noteBody = restLines.join("\n").trim();
+                  const photoLabel = hasPhotoTag
+                    ? firstLine.replace(/^\[|\]$/g, "")
+                    : "";
+
                   return (
                     <div
                       key={msg.id}
                       className="flex justify-end gap-space-sm pl-6 sm:pl-12 ml-auto max-w-[580px]"
                     >
                       <div className="flex flex-col items-end gap-1">
-                        <div className="bg-primary text-on-primary rounded-2xl rounded-tr-sm px-space-md py-3.5 shadow-sm">
-                          <p className="font-body-md text-body-md leading-relaxed whitespace-pre-line">
-                            {msg.content}
-                          </p>
+                        <div className="bg-primary text-on-primary rounded-2xl rounded-tr-sm px-space-md py-3.5 shadow-sm flex flex-col gap-2">
+                          {previewUrl && (
+                            <img
+                              src={previewUrl}
+                              alt="Foto makanan pengguna"
+                              className="w-48 sm:w-56 max-h-48 object-cover rounded-xl bg-surface-container-lowest/20"
+                            />
+                          )}
+                          {hasPhotoTag && (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-on-primary/15 text-on-primary font-label-sm text-label-sm font-medium self-start">
+                              <span className="material-symbols-outlined text-[15px] shrink-0">
+                                photo_camera
+                              </span>
+                              <span className="break-words">{photoLabel}</span>
+                            </div>
+                          )}
+                          {(!hasPhotoTag || noteBody) && (
+                            <p className="font-body-md text-body-md leading-relaxed whitespace-pre-line">
+                              {hasPhotoTag ? noteBody : rawContent}
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm px-1">
                           <span>{formatTimeWIB(msg.created_at)}</span>
@@ -1027,6 +1139,7 @@ export default function ChatPage() {
                 }
 
                 const card = msg.meta?.card;
+                const mealAnalysis = msg.meta?.meal_analysis;
                 const sources = msg.meta?.sources || [];
                 const suggestedAction = msg.meta?.suggested_action;
                 const flagLevel = msg.flag_level || "none";
@@ -1196,6 +1309,9 @@ export default function ChatPage() {
                           </div>
                         </div>
                       )}
+
+                      {/* Structured Meal Score Card */}
+                      {mealAnalysis && <MealScoreCard analysis={mealAnalysis} />}
 
                       {/* FULL 'Rekomendasi Hari Ini' CARD (Matches Stitch Screen 27) */}
                       {card && (
@@ -1409,7 +1525,22 @@ export default function ChatPage() {
 
           {/* Bottom Input Area with Mobile Horizontal Quick Prompts */}
           <div className="p-3 sm:p-space-md bg-surface-container-lowest border-t border-surface-container-highest/40">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleSelectMealPhoto}
+              className="hidden"
+            />
             <div className="flex lg:hidden items-center gap-2 overflow-x-auto no-scrollbar pb-2.5">
+              <button
+                type="button"
+                onClick={openMealPhotoPicker}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold whitespace-nowrap shrink-0 active:scale-95 transition-all"
+              >
+                <span>📸</span>
+                <span>Analisis Foto Makanan</span>
+              </button>
               <button
                 type="button"
                 onClick={() =>
@@ -1443,6 +1574,44 @@ export default function ChatPage() {
                 <span>Tips kembung & lelah</span>
               </button>
             </div>
+            {(compressingImage || selectedImage) && (
+              <div className="mb-2 flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-surface-container-low border border-outline-variant/25">
+                {compressingImage ? (
+                  <div className="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md px-1">
+                    <span className="material-symbols-outlined text-[18px] animate-spin text-primary">
+                      progress_activity
+                    </span>
+                    <span>Memperkecil foto makanan agar cepat dianalisis...</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img
+                        src={selectedImage.previewDataUrl}
+                        alt="Preview foto makanan"
+                        className="w-12 h-12 rounded-xl object-cover shrink-0 shadow-xs"
+                      />
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
+                          {selectedImage.fileName}
+                        </span>
+                        <span className="font-label-sm text-label-sm text-secondary font-medium">
+                          Siap dianalisis (~{Math.max(1, Math.round(selectedImage.byteSize / 1024))} KB)
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Hapus foto makanan"
+                      onClick={() => setSelectedImage(null)}
+                      className="w-8 h-8 rounded-full hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">close</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -1459,12 +1628,30 @@ export default function ChatPage() {
                 >
                   <span className="material-symbols-outlined text-[20px]">add_circle</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={openMealPhotoPicker}
+                  disabled={sending || compressingImage}
+                  title="Unggah Foto Makanan (Snap & Score)"
+                  aria-label="Unggah Foto Makanan"
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shrink-0 ml-0.5 ${
+                    selectedImage
+                      ? "bg-secondary-container text-secondary"
+                      : "text-on-surface-variant hover:text-secondary hover:bg-surface-container"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">photo_camera</span>
+                </button>
                 <input
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   maxLength={1000}
-                  placeholder="Ketik pesan atau pilih salah satu topik di atas..."
+                  placeholder={
+                    selectedImage
+                      ? "Tambahkan catatan makanan (opsional) atau langsung kirim..."
+                      : "Ketik pesan, unggah foto makanan, atau pilih topik di atas..."
+                  }
                   className="w-full bg-transparent px-space-sm py-2 text-on-surface placeholder:text-outline font-body-md text-body-md outline-none"
                 />
                 <span className="font-label-sm text-label-sm text-outline shrink-0 mr-2 tabular-nums">
@@ -1472,10 +1659,18 @@ export default function ChatPage() {
                 </span>
                 <button
                   type="submit"
-                  disabled={!inputText.trim() || sending || remainingQuota <= 0}
+                  disabled={
+                    (!inputText.trim() && !selectedImage) ||
+                    sending ||
+                    compressingImage ||
+                    remainingQuota <= 0
+                  }
                   title="Kirim pesan"
                   className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ${
-                    inputText.trim() && !sending && remainingQuota > 0
+                    (inputText.trim() || selectedImage) &&
+                    !sending &&
+                    !compressingImage &&
+                    remainingQuota > 0
                       ? "bg-primary text-on-primary shadow-sm hover:bg-primary-container cursor-pointer"
                       : "bg-surface-container-highest text-outline cursor-not-allowed"
                   }`}
