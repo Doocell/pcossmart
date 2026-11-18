@@ -514,11 +514,64 @@ function getBannerLocal(level) {
   return null;
 }
 
+function normalizeMealLocal(raw) {
+  let obj = raw;
+  if (typeof raw === "string") {
+    try {
+      obj = JSON.parse(raw);
+    } catch {
+      const m = raw.match(/\{[\s\S]*\}/);
+      obj = m ? JSON.parse(m[0]) : null;
+    }
+  }
+  if (!obj || typeof obj !== "object") return null;
+  if (!obj.is_food) {
+    return {
+      is_food: false,
+      meal_name: "",
+      detected_items: [],
+      pcos_score: null,
+      gi_category: null,
+      glycemic_impact: "",
+      balancing_tips: [],
+      assistant_reply:
+        obj.assistant_reply ||
+        "Foto belum terlihat jelas sebagai makanan atau minuman ya. Coba ambil ulang di cahaya terang.",
+    };
+  }
+  const score = Math.max(0, Math.min(100, Math.round(Number(obj.pcos_score) || 70)));
+  const giRaw = String(obj.gi_category || "").toLowerCase();
+  const gi_category = giRaw.includes("rendah")
+    ? "rendah"
+    : giRaw.includes("tinggi")
+    ? "tinggi"
+    : "sedang";
+  return {
+    is_food: true,
+    meal_name: String(obj.meal_name || "Menu Makanan").slice(0, 120),
+    detected_items: Array.isArray(obj.detected_items)
+      ? obj.detected_items.map((x) => String(x).trim()).filter(Boolean).slice(0, 12)
+      : [],
+    pcos_score: score,
+    gi_category,
+    glycemic_impact: String(
+      obj.glycemic_impact || "Perkiraan indeks glikemik berdasarkan komposisi visual hidangan."
+    ),
+    balancing_tips: Array.isArray(obj.balancing_tips)
+      ? obj.balancing_tips.map((x) => String(x).trim()).filter(Boolean).slice(0, 3)
+      : [],
+    assistant_reply: String(
+      obj.assistant_reply || "Ini perkiraan skor ramah PCOS untuk hidanganmu."
+    ),
+  };
+}
+
 export async function sendChatMessage({
-  message,
+  message = "",
   mode = "free",
   context_article_id = null,
   tasks = [],
+  image = null,
 }) {
   const {
     data: { session },
@@ -536,6 +589,9 @@ export async function sendChatMessage({
   let cloudCheckins = [];
   if (backendMode === "cloud" && !getLocalSession()) {
     try {
+      const payloadBody = image
+        ? { message, mode, context_article_id, tasks, image }
+        : { message, mode, context_article_id, tasks };
       const res = await fetch(`${supabaseUrl}/functions/v1/chat`, {
         method: "POST",
         headers: {
@@ -543,7 +599,7 @@ export async function sendChatMessage({
           apikey: supabaseAnonKey,
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ message, mode, context_article_id, tasks }),
+        body: JSON.stringify(payloadBody),
       });
       let data = {};
       try {
@@ -628,6 +684,7 @@ export async function sendChatMessage({
   const banner = getBannerLocal(flagLevel);
 
   const isRecMode = mode === "recommendation";
+  const isMealMode = mode === "meal_analysis" && Boolean(image);
 
   // Rule 3: mode === 'recommendation' without today's check-in -> return open_checkin
   if (isRecMode && !todayCheckin && flagLevel === "none") {
@@ -671,14 +728,17 @@ export async function sendChatMessage({
 
   let replyText = "";
   let card = null;
+  let mealAnalysis = null;
   let sources = [];
   let suggestedAction = null;
 
   if (flagLevel === "crisis") {
     replyText = `${nickname}, napas pelan-pelan ya. Kamu tidak harus memikul semua beban ini sendirian hari ini. Perasaanmu valid dan tubuhmu layak mendapatkan pendampingan yang penuh welas asih.`;
   } else if (flagLevel === "severe") {
-    replyText = `Terima kasih sudah memberitahu kondisimu, ${nickname}. Keluhan perdarahan deras yang disertai rasa lemas atau pusing berkunang-kunang perlu segera diperiksakan ke dokter atau fasilitas kesehatan terdekat agar kamu mendapatkan penanganan yang aman.`;
-  } else if (flagLevel === "warning") {
+    replyText = isMealMode
+      ? `Terima kasih sudah berbagi, ${nickname}. Keluhan atau kondisi serius yang kamu sampaikan perlu perhatian tenaga medis terlebih dahulu sebelum membahas pola makan. Pertimbangkan segera berkonsultasi dengan dokter atau fasilitas kesehatan terdekat ya.`
+      : `Terima kasih sudah memberitahu kondisimu, ${nickname}. Keluhan perdarahan deras yang disertai rasa lemas atau pusing berkunang-kunang perlu segera diperiksakan ke dokter atau fasilitas kesehatan terdekat agar kamu mendapatkan penanganan yang aman.`;
+  } else if (flagLevel === "warning" && !isMealMode) {
     replyText = `Terima kasih sudah membagikan apa yang kamu rasakan, ${nickname}. Nyeri panggul atau keluhan yang berlangsung intens patut mendapatkan perhatian lebih.`;
   } else {
     // Assemble context matching supabase/functions/_shared/context.ts & gemini.ts
@@ -740,7 +800,10 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
       });
     }
 
-    if (isRecMode) {
+    if (isMealMode) {
+      userPrompt += "\nTugas khusus: Analisis foto makanan pengguna untuk skor ramah PCOS berbasis perkiraan Indeks Glikemik tanpa kalori. Kembalikan HANYA JSON valid dengan field: is_food, meal_name, detected_items, pcos_score (0-100), gi_category ('rendah'|'sedang'|'tinggi'), glycemic_impact, balancing_tips (array), assistant_reply.\n";
+      userPrompt += `Catatan user: ${message.trim() || "Tolong analisis foto makanan ini."}\n`;
+    } else if (isRecMode) {
       userPrompt += "\nMode: Rekomendasi Harian\n";
       if (tasks.length > 0) {
         userPrompt += `Tugas hari ini: ${tasks.join(", ")}\n`;
@@ -763,8 +826,10 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
           2
         ) +
         "\n\n";
+      userPrompt += `Pesan user: ${message}\n`;
+    } else {
+      userPrompt += `Pesan user: ${message}\n`;
     }
-    userPrompt += `Pesan user: ${message}\n`;
 
     // Direct Gemini fallback is guarded to DEV mode only so production builds rely on the Edge Function secret
     const geminiKey = import.meta.env.DEV ? import.meta.env.VITE_GEMINI_API_KEY : null;
@@ -774,8 +839,17 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout per contract
       try {
+        const geminiParts = [{ text: `${systemPrompt}\n\n${userPrompt}` }];
+        if (isMealMode && image) {
+          geminiParts.push({
+            inlineData: {
+              mimeType: image.mime_type,
+              data: image.data,
+            },
+          });
+        }
         const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`,
+          `https://generativelanguage.googleapis.com/v1/models/${geminiModel}:generateContent`,
           {
             method: "POST",
             headers: {
@@ -786,13 +860,19 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
               contents: [
                 {
                   role: "user",
-                  parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }],
+                  parts: geminiParts,
                 },
               ],
-              generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 1000,
-              },
+              generationConfig: isMealMode
+                ? {
+                    temperature: 0.4,
+                    maxOutputTokens: 1000,
+                    responseMimeType: "application/json",
+                  }
+                : {
+                    temperature: 0.7,
+                    maxOutputTokens: 1000,
+                  },
             }),
             signal: controller.signal,
           }
@@ -808,7 +888,17 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
               .trim() || "";
 
           if (rawText) {
-            if (isRecMode) {
+            if (isMealMode) {
+              try {
+                const parsedMeal = normalizeMealLocal(rawText);
+                if (parsedMeal) {
+                  mealAnalysis = parsedMeal.is_food ? parsedMeal : null;
+                  replyText = parsedMeal.assistant_reply;
+                }
+              } catch {
+                replyText = rawText;
+              }
+            } else if (isRecMode) {
               const jsonMatch = rawText.match(/\{[\s\S]*\}/);
               if (jsonMatch) {
                 try {
@@ -849,7 +939,23 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
 
     // Topic-aware fallback if Gemini key missing or request failed
     if (!replyText) {
-      if (isRecMode) {
+      if (isMealMode) {
+        mealAnalysis = {
+          is_food: true,
+          meal_name: "Menu Harian Seimbang",
+          detected_items: ["Sumber karbohidrat", "Sumber protein", "Sayuran berserat"],
+          pcos_score: 74,
+          gi_category: "sedang",
+          glycemic_impact:
+            "Perkiraan mode offline: kombinasi protein dan serat membantu menjaga kurva gula darah lebih landai dibanding karbohidrat tunggal.",
+          balancing_tips: [
+            "Awali makan dengan porsi sayur dan protein lebih dulu sebelum karbohidrat utama.",
+            "Tambahkan 10–15 menit jalan santai setelah makan bila terasa begah.",
+          ],
+          assistant_reply: `Halo ${nickname} 🥗 Saat ini analisis berjalan di mode cadangan lokal. Pastikan piringmu memadukan serat sayur, protein cukup, dan karbohidrat porsi wajar agar gula darah tetap nyaman ya.`,
+        };
+        replyText = mealAnalysis.assistant_reply;
+      } else if (isRecMode) {
         const energyVal = todayCheckin?.energy ?? 3;
         const beban = energyVal <= 2 ? "ringan" : energyVal === 3 ? "sedang" : "normal";
         replyText = `Tentu, ${nickname}! Memperhatikan energi pagimu di level **${energyVal}/5** serta catatan harianmu, berikut ritme adaptif yang dirancang agar kortisol tetap seimbang sekaligus menjaga sensitivitas insulinmu:`;
@@ -895,11 +1001,19 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
     }));
   }
 
+  const savedUserContent = isMealMode
+    ? mealAnalysis?.is_food
+      ? `[Foto Makanan: ${mealAnalysis.meal_name} • Skor PCOS ${mealAnalysis.pcos_score}/100 (IG ${mealAnalysis.gi_category})]${
+          message.trim() ? `\n${message.trim()}` : ""
+        }`
+      : `[Foto Makanan]${message.trim() ? `\n${message.trim()}` : ""}`
+    : message;
+
   const userMsg = {
     id: crypto.randomUUID(),
     user_id: userId,
     role: "user",
-    content: message,
+    content: savedUserContent,
     flag_level: flagLevel,
     meta: tasks.length > 0 ? { tasks } : null,
     created_at: new Date().toISOString(),
@@ -913,6 +1027,7 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
     flag_level: flagLevel,
     meta: {
       card,
+      meal_analysis: mealAnalysis,
       sources,
       suggested_action: suggestedAction,
       banner,
@@ -925,10 +1040,12 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
 
   return {
     user_message_id: userMsg.id,
+    user_message_content: savedUserContent,
     reply: {
       id: modelMsg.id,
       text: replyText,
       card,
+      meal_analysis: mealAnalysis,
       sources,
       suggested_action: suggestedAction,
     },
