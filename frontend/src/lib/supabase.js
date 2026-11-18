@@ -768,7 +768,7 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
 
     // Direct Gemini fallback is guarded to DEV mode only so production builds rely on the Edge Function secret
     const geminiKey = import.meta.env.DEV ? import.meta.env.VITE_GEMINI_API_KEY : null;
-    const geminiModel = import.meta.env.VITE_GEMINI_MODEL || "gemini-3.5-flash";
+    const geminiModel = import.meta.env.VITE_GEMINI_MODEL || "gemini-3.5-flash-lite";
 
     if (geminiKey) {
       const controller = new AbortController();
@@ -953,7 +953,7 @@ export async function transcribeAudioWithGemini(
   const geminiKey = import.meta.env.DEV
     ? import.meta.env.VITE_GEMINI_API_KEY
     : null;
-  const geminiModel = import.meta.env.VITE_GEMINI_MODEL || "gemini-3.5-flash";
+  const geminiModel = import.meta.env.VITE_GEMINI_MODEL || "gemini-3.5-flash-lite";
 
   if (!geminiKey) {
     if (existingLiveTranscript.trim()) {
@@ -1040,7 +1040,7 @@ export async function polishJournalWithGemini(rawText = "") {
   const geminiKey = import.meta.env.DEV
     ? import.meta.env.VITE_GEMINI_API_KEY
     : null;
-  const geminiModel = import.meta.env.VITE_GEMINI_MODEL || "gemini-3.5-flash";
+  const geminiModel = import.meta.env.VITE_GEMINI_MODEL || "gemini-3.5-flash-lite";
   if (!geminiKey) return { text: clean.slice(0, 500), polishedByAi: false };
 
   const controller = new AbortController();

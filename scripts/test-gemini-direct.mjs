@@ -4,7 +4,7 @@
  */
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'YOUR_API_KEY_HERE'
-const GEMINI_MODEL = 'gemini-3.5-flash'
+const GEMINI_MODEL = 'gemini-3.5-flash-lite'
 
 console.log('🧪 Testing Gemini API Directly\n')
 console.log('Model:', GEMINI_MODEL)

@@ -134,7 +134,7 @@ export async function callGemini(
   tasks: string[],
 ): Promise<GeminiResponse> {
   const apiKey = Deno.env.get('GEMINI_API_KEY')
-  const model = Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash'
+  const model = Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash-lite'
 
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY not configured')
