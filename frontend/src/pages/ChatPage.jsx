@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { sendChatMessage, supabase } from "../lib/supabase";
 import { compressMealImageFile } from "../lib/imageUtils";
+import { clearConversationHistory } from "../lib/chatHistoryUtils";
 import MealScoreCard from "../components/MealScoreCard";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -128,6 +129,8 @@ export default function ChatPage() {
 
   // Task Modal State (Matches Stitch Screen 36: PCOSmart - Modal Tugas Hari Ini)
   const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [clearModalOpen, setClearModalOpen] = useState(false);
+  const [clearingChat, setClearingChat] = useState(false);
   const [taskInput, setTaskInput] = useState("");
   const [taskList, setTaskList] = useState([
     "Rapat koordinasi tim pagi via Zoom",
@@ -384,22 +387,44 @@ export default function ChatPage() {
   }, [taskModalOpen]);
 
   useEffect(() => {
+    if (!clearModalOpen) return;
+    const onKey = (e) => {
+      if (e.key === "Escape" && !clearingChat) setClearModalOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [clearModalOpen, clearingChat]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
 
-  const handleClearConversation = async () => {
-    if (user) {
-      try {
-        await supabase.from("chat_messages").delete().eq("user_id", user.id);
-      } catch {
-        // Ignore if Cloud RLS restricts DELETE on chat_messages
-      }
+  const handleConfirmClearConversation = async () => {
+    if (clearingChat) return;
+    setClearingChat(true);
+    setErrorBanner("");
+    try {
+      await clearConversationHistory({
+        userId: user?.id || null,
+        deleteRemoteMessages: (uid) =>
+          supabase.from("chat_messages").delete().eq("user_id", uid),
+        onLocalReset: () => {
+          setMessages([]);
+          setPinnedCard(null);
+          setSelectedImage(null);
+          setLocalPhotoPreviews({});
+          setCrisisModeActive(false);
+        },
+      });
+      setClearModalOpen(false);
+    } catch (err) {
+      setErrorBanner(
+        err.message || "Gagal menghapus riwayat percakapan di cloud. Silakan coba lagi."
+      );
+      setClearModalOpen(false);
+    } finally {
+      setClearingChat(false);
     }
-    setMessages([]);
-    setPinnedCard(null);
-    setSelectedImage(null);
-    setLocalPhotoPreviews({});
-    setCrisisModeActive(false);
   };
 
   const handleAddTask = () => {
@@ -655,11 +680,11 @@ export default function ChatPage() {
 
           <button
             type="button"
-            onClick={handleClearConversation}
+            onClick={() => setClearModalOpen(true)}
             className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-surface-container hover:bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm transition-all"
           >
             <span className="material-symbols-outlined text-[15px]">restart_alt</span>
-            <span>Reset Sesi</span>
+            <span>Bersihkan Chat</span>
           </button>
         </div>
       </div>
@@ -966,8 +991,8 @@ export default function ChatPage() {
               </button>
               <button
                 type="button"
-                onClick={handleClearConversation}
-                title="Bersihkan percakapan"
+                onClick={() => setClearModalOpen(true)}
+                title="Bersihkan riwayat percakapan"
                 className="w-9 h-9 rounded-full bg-surface-container hover:bg-surface-container-highest text-on-surface-variant flex items-center justify-center transition-colors"
               >
                 <span className="material-symbols-outlined text-[18px]">restart_alt</span>
@@ -1838,6 +1863,59 @@ export default function ChatPage() {
               >
                 <span className="material-symbols-outlined text-[20px] fill-1">auto_awesome</span>
                 <span>Buat Rekomendasi</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear Chat Confirmation Modal */}
+      {clearModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 backdrop-blur-sm p-space-md animate-fade-in"
+          onClick={() => !clearingChat && setClearModalOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="clear-chat-modal-title"
+            className="w-full max-w-md bg-surface-container-lowest rounded-xl shadow-2xl p-space-lg flex flex-col gap-space-md border border-outline-variant/20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-space-sm">
+              <div className="w-10 h-10 rounded-full bg-error-container/70 text-error flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[20px]">delete_sweep</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <h3
+                  id="clear-chat-modal-title"
+                  className="font-title-md text-title-md text-on-surface font-semibold"
+                >
+                  Bersihkan Riwayat Percakapan?
+                </h3>
+                <p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                  Semua pesan dan hasil skor makananmu akan dihapus secara permanen dari
+                  sesi ini dan akun cloud-mu.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-space-sm pt-space-xs">
+              <button
+                type="button"
+                disabled={clearingChat}
+                onClick={() => setClearModalOpen(false)}
+                className="h-11 px-space-lg rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface font-label-lg text-label-lg transition-colors disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={clearingChat}
+                onClick={handleConfirmClearConversation}
+                className="h-11 px-space-lg rounded-full bg-error hover:bg-error/90 text-on-error font-label-lg text-label-lg flex items-center gap-2 transition-colors disabled:opacity-60"
+              >
+                {clearingChat ? "Menghapus..." : "Ya, Bersihkan"}
               </button>
             </div>
           </div>

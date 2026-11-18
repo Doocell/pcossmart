@@ -93,6 +93,28 @@ describe("parseMealAnalysisResponse", () => {
     assert.equal(parsed.gi_category, null);
     assert.ok(parsed.assistant_reply.length > 0);
   });
+
+  it("handles null, empty, zero, and stringified boolean/numeric fields accurately", () => {
+    const nullScore = parseMealAnalysisResponse(JSON.stringify({ is_food: true, pcos_score: null }));
+    assert.equal(nullScore.is_food, true);
+    assert.equal(nullScore.pcos_score, 65);
+
+    const emptyScore = parseMealAnalysisResponse(JSON.stringify({ is_food: true, pcos_score: "" }));
+    assert.equal(emptyScore.is_food, true);
+    assert.equal(emptyScore.pcos_score, 65);
+
+    const zeroScore = parseMealAnalysisResponse(JSON.stringify({ is_food: true, pcos_score: 0 }));
+    assert.equal(zeroScore.is_food, true);
+    assert.equal(zeroScore.pcos_score, 0);
+
+    const strFalse = parseMealAnalysisResponse(JSON.stringify({ is_food: "false", pcos_score: 75 }));
+    assert.equal(strFalse.is_food, false);
+    assert.equal(strFalse.pcos_score, null);
+
+    const strTrue = parseMealAnalysisResponse(JSON.stringify({ is_food: "true", pcos_score: "82" }));
+    assert.equal(strTrue.is_food, true);
+    assert.equal(strTrue.pcos_score, 82);
+  });
 });
 
 describe("formatMealUserContent", () => {

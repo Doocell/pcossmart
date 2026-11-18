@@ -23,11 +23,15 @@ const GI_BADGE_MAP = {
  * Displays structured PCOS-friendly meal analysis and glycemic balance tips.
  */
 export default function MealScoreCard({ analysis }) {
-  if (!analysis || analysis.is_food === false) return null;
+  if (!analysis || analysis.is_food !== true) return null;
 
   const giMeta = GI_BADGE_MAP[analysis.gi_category] || GI_BADGE_MAP.sedang;
-  const score = Number.isFinite(Number(analysis.pcos_score))
-    ? Math.max(0, Math.min(100, Math.round(Number(analysis.pcos_score))))
+  const hasNumericScore =
+    typeof analysis.pcos_score === "number" ||
+    (typeof analysis.pcos_score === "string" && analysis.pcos_score.trim() !== "");
+  const rawScore = hasNumericScore ? Number(analysis.pcos_score) : Number.NaN;
+  const score = Number.isFinite(rawScore)
+    ? Math.max(0, Math.min(100, Math.round(rawScore)))
     : 70;
   const items = Array.isArray(analysis.detected_items) ? analysis.detected_items : [];
   const tips = Array.isArray(analysis.balancing_tips) ? analysis.balancing_tips : [];

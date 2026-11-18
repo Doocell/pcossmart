@@ -110,7 +110,9 @@ export function parseMealAnalysisResponse(rawText: string): MealAnalysisResult {
     }
   }
 
-  const isFood = Boolean(parsed.is_food)
+  const isFood =
+    parsed.is_food === true ||
+    (typeof parsed.is_food === 'string' && parsed.is_food.trim().toLowerCase() === 'true')
   const assistantReply =
     typeof parsed.assistant_reply === 'string' && parsed.assistant_reply.trim()
       ? parsed.assistant_reply.trim()
@@ -131,7 +133,10 @@ export function parseMealAnalysisResponse(rawText: string): MealAnalysisResult {
     }
   }
 
-  const rawScore = Number(parsed.pcos_score)
+  const hasNumericScore =
+    typeof parsed.pcos_score === 'number' ||
+    (typeof parsed.pcos_score === 'string' && parsed.pcos_score.trim() !== '')
+  const rawScore = hasNumericScore ? Number(parsed.pcos_score) : Number.NaN
   const clampedScore = Number.isFinite(rawScore)
     ? Math.max(0, Math.min(100, Math.round(rawScore)))
     : 65

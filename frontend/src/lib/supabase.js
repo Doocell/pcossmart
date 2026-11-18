@@ -6,6 +6,10 @@ import {
   saveLocalDb,
   setLocalSession,
 } from "./localBackend";
+import {
+  formatLocalMealUserContent,
+  resolveLocalMealFallbackReply,
+} from "./mealFallbackUtils";
 
 const supabaseUrl =
   import.meta.env.VITE_SUPABASE_URL || "https://placeholder.supabase.co";
@@ -514,58 +518,6 @@ function getBannerLocal(level) {
   return null;
 }
 
-function normalizeMealLocal(raw) {
-  let obj = raw;
-  if (typeof raw === "string") {
-    try {
-      obj = JSON.parse(raw);
-    } catch {
-      const m = raw.match(/\{[\s\S]*\}/);
-      obj = m ? JSON.parse(m[0]) : null;
-    }
-  }
-  if (!obj || typeof obj !== "object") return null;
-  if (!obj.is_food) {
-    return {
-      is_food: false,
-      meal_name: "",
-      detected_items: [],
-      pcos_score: null,
-      gi_category: null,
-      glycemic_impact: "",
-      balancing_tips: [],
-      assistant_reply:
-        obj.assistant_reply ||
-        "Foto belum terlihat jelas sebagai makanan atau minuman ya. Coba ambil ulang di cahaya terang.",
-    };
-  }
-  const score = Math.max(0, Math.min(100, Math.round(Number(obj.pcos_score) || 70)));
-  const giRaw = String(obj.gi_category || "").toLowerCase();
-  const gi_category = giRaw.includes("rendah")
-    ? "rendah"
-    : giRaw.includes("tinggi")
-    ? "tinggi"
-    : "sedang";
-  return {
-    is_food: true,
-    meal_name: String(obj.meal_name || "Menu Makanan").slice(0, 120),
-    detected_items: Array.isArray(obj.detected_items)
-      ? obj.detected_items.map((x) => String(x).trim()).filter(Boolean).slice(0, 12)
-      : [],
-    pcos_score: score,
-    gi_category,
-    glycemic_impact: String(
-      obj.glycemic_impact || "Perkiraan indeks glikemik berdasarkan komposisi visual hidangan."
-    ),
-    balancing_tips: Array.isArray(obj.balancing_tips)
-      ? obj.balancing_tips.map((x) => String(x).trim()).filter(Boolean).slice(0, 3)
-      : [],
-    assistant_reply: String(
-      obj.assistant_reply || "Ini perkiraan skor ramah PCOS untuk hidanganmu."
-    ),
-  };
-}
-
 export async function sendChatMessage({
   message = "",
   mode = "free",
@@ -889,15 +841,9 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
 
           if (rawText) {
             if (isMealMode) {
-              try {
-                const parsedMeal = normalizeMealLocal(rawText);
-                if (parsedMeal) {
-                  mealAnalysis = parsedMeal.is_food ? parsedMeal : null;
-                  replyText = parsedMeal.assistant_reply;
-                }
-              } catch {
-                replyText = rawText;
-              }
+              const resolved = resolveLocalMealFallbackReply({ rawText });
+              mealAnalysis = resolved.mealAnalysis;
+              replyText = resolved.replyText;
             } else if (isRecMode) {
               const jsonMatch = rawText.match(/\{[\s\S]*\}/);
               if (jsonMatch) {
@@ -940,21 +886,9 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
     // Topic-aware fallback if Gemini key missing or request failed
     if (!replyText) {
       if (isMealMode) {
-        mealAnalysis = {
-          is_food: true,
-          meal_name: "Menu Harian Seimbang",
-          detected_items: ["Sumber karbohidrat", "Sumber protein", "Sayuran berserat"],
-          pcos_score: 74,
-          gi_category: "sedang",
-          glycemic_impact:
-            "Perkiraan mode offline: kombinasi protein dan serat membantu menjaga kurva gula darah lebih landai dibanding karbohidrat tunggal.",
-          balancing_tips: [
-            "Awali makan dengan porsi sayur dan protein lebih dulu sebelum karbohidrat utama.",
-            "Tambahkan 10–15 menit jalan santai setelah makan bila terasa begah.",
-          ],
-          assistant_reply: `Halo ${nickname} 🥗 Saat ini analisis berjalan di mode cadangan lokal. Pastikan piringmu memadukan serat sayur, protein cukup, dan karbohidrat porsi wajar agar gula darah tetap nyaman ya.`,
-        };
-        replyText = mealAnalysis.assistant_reply;
+        const resolved = resolveLocalMealFallbackReply({ rawText: "" });
+        mealAnalysis = resolved.mealAnalysis;
+        replyText = resolved.replyText;
       } else if (isRecMode) {
         const energyVal = todayCheckin?.energy ?? 3;
         const beban = energyVal <= 2 ? "ringan" : energyVal === 3 ? "sedang" : "normal";
@@ -1001,12 +935,9 @@ PENTING: Jangan pernah menyarankan bunuh diri atau hal berbahaya.`;
     }));
   }
 
+  const safetyShortCircuit = flagLevel === "crisis" || flagLevel === "severe";
   const savedUserContent = isMealMode
-    ? mealAnalysis?.is_food
-      ? `[Foto Makanan: ${mealAnalysis.meal_name} • Skor PCOS ${mealAnalysis.pcos_score}/100 (IG ${mealAnalysis.gi_category})]${
-          message.trim() ? `\n${message.trim()}` : ""
-        }`
-      : `[Foto Makanan]${message.trim() ? `\n${message.trim()}` : ""}`
+    ? formatLocalMealUserContent(mealAnalysis, message, safetyShortCircuit)
     : message;
 
   const userMsg = {
