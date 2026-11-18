@@ -45,7 +45,7 @@ const { data, error } = await sb.functions.invoke('chat', {
 if (error) {
   console.error('❌ Chat function error:')
   console.error('   Status:', error.context?.status)
-  
+
   const errorBody = await error.context?.json?.().catch(() => null)
   if (errorBody) {
     console.error('   Error code:', errorBody.error?.code)
@@ -54,12 +54,12 @@ if (error) {
   } else {
     console.error('   Raw error:', error)
   }
-  
+
   console.log('\n💡 Troubleshooting tips:')
   console.log('   1. Check if GEMINI_API_KEY is set correctly in Supabase secrets')
   console.log('   2. View function logs in dashboard: https://supabase.com/dashboard/project/zhreisaigvyyhogudpld/functions')
   console.log('   3. Check Gemini API quota: https://aistudio.google.com/app/apikey')
-  
+
   process.exit(1)
 }
 
@@ -73,6 +73,6 @@ if (data) {
   console.log('   Sources:', data.reply.sources?.length || 0)
   console.log('   Flag level:', data.flag.level)
   console.log('   Remaining this hour:', data.usage.remaining_this_hour)
-  
+
   console.log('\n✅ Gemini integration working! 🎉')
 }
