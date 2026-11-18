@@ -3,10 +3,17 @@
  */
 
 import type { ChatContext } from './context.ts'
+import {
+  buildMealAnalysisPrompt,
+  parseMealAnalysisResponse,
+  type MealAnalysisResult,
+  type MealImageInput,
+} from './meal.ts'
 
 export interface GeminiResponse {
   text: string
   card: any | null
+  meal_analysis?: MealAnalysisResult | null
   sources: Array<{ title: string; article_id: string | null; url: string | null }>
 }
 
@@ -132,34 +139,59 @@ export async function callGemini(
   context: ChatContext,
   mode: string,
   tasks: string[],
+  image?: MealImageInput,
 ): Promise<GeminiResponse> {
   const apiKey = Deno.env.get('GEMINI_API_KEY')
-  const model = Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash-lite'
+  const model =
+    (mode === 'meal_analysis' ? Deno.env.get('GEMINI_MEAL_MODEL') : undefined) ||
+    Deno.env.get('GEMINI_MODEL') ||
+    'gemini-3.5-flash-lite'
 
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY not configured')
   }
 
+  const isMealMode = mode === 'meal_analysis' && Boolean(image)
   const systemPrompt = buildSystemPrompt()
-  const userPrompt = buildUserPrompt(message, context, mode, tasks)
+  const userPrompt = isMealMode
+    ? buildMealAnalysisPrompt(message, context)
+    : buildUserPrompt(message, context, mode, tasks)
 
-    const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`
+  const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`
+
+  const parts: Array<Record<string, unknown>> = [
+    {
+      text: systemPrompt + '\n\n' + userPrompt,
+    },
+  ]
+  if (isMealMode && image) {
+    parts.push({
+      inlineData: {
+        mimeType: image.mime_type,
+        data: image.data,
+      },
+    })
+  }
+
+  const generationConfig: Record<string, unknown> = isMealMode
+    ? {
+        temperature: 0.4,
+        maxOutputTokens: 1000,
+        responseMimeType: 'application/json',
+      }
+    : {
+        temperature: 0.7,
+        maxOutputTokens: 1000,
+      }
 
   const requestBody = {
     contents: [
       {
         role: 'user',
-        parts: [
-          {
-            text: systemPrompt + '\n\n' + userPrompt,
-          },
-        ],
+        parts,
       },
     ],
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 1000,
-    },
+    generationConfig,
   }
 
   const controller = new AbortController()
@@ -179,11 +211,28 @@ export async function callGemini(
     const data = await response.json()
 
     // Parse response
-      const text =
+    const text =
       (data.candidates?.[0]?.content?.parts ?? [])
         .map((p: { text?: string }) => p.text ?? '')
         .join('')
         .trim() || 'Maaf, tidak ada respons.'
+
+    // Extract sources dari artikel yang dipakai
+    const sources = context.relevantArticles.map((article) => ({
+      title: article.title,
+      article_id: null, // Will be filled from database lookup if needed
+      url: null,
+    }))
+
+    if (isMealMode) {
+      const parsedMeal = parseMealAnalysisResponse(text)
+      return {
+        text: parsedMeal.assistant_reply,
+        card: null,
+        meal_analysis: parsedMeal.is_food ? parsedMeal : null,
+        sources,
+      }
+    }
 
     // Jika mode recommendation, coba parse JSON
     let card = null
@@ -199,16 +248,10 @@ export async function callGemini(
       }
     }
 
-    // Extract sources dari artikel yang dipakai
-    const sources = context.relevantArticles.map((article) => ({
-      title: article.title,
-      article_id: null, // Will be filled from database lookup if needed
-      url: null,
-    }))
-
     return {
       text: card ? 'Dari check-in hari ini, ini saran untukmu.' : text,
       card,
+      meal_analysis: null,
       sources,
     }
   } catch (error: any) {
@@ -250,9 +293,10 @@ export async function callLLM(
   context: ChatContext,
   mode: string,
   tasks: string[],
+  image?: MealImageInput,
 ): Promise<GeminiResponse> {
   try {
-    return await callGemini(message, context, mode, tasks)
+    return await callGemini(message, context, mode, tasks, image)
   } catch (error: any) {
     console.error('Gemini failed:', error.message)
 

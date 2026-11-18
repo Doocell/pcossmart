@@ -3,8 +3,15 @@ import { corsHeaders, json, errorResponse } from '../_shared/http.ts'
 import { checkSafety, getBanner, CRISIS_REPLY_TEXT } from '../_shared/safety.ts'
 import { assembleContext } from '../_shared/context.ts'
 import { callLLM } from '../_shared/gemini.ts'
+import {
+  formatMealUserContent,
+  validateMealImageInput,
+  type MealImageInput,
+} from '../_shared/meal.ts'
 
-const MODES = ['free', 'recommendation']
+const MODES = ['free', 'recommendation', 'meal_analysis']
+const SEVERE_MEAL_SAFETY_REPLY =
+  'Terima kasih sudah berbagi. Keluhan atau kondisi serius yang kamu sampaikan perlu perhatian tenaga medis terlebih dahulu sebelum membahas pola makan. Pertimbangkan segera berkonsultasi dengan dokter atau fasilitas kesehatan terdekat ya.'
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -61,18 +68,42 @@ Deno.serve(async (req) => {
       return errorResponse(400, 'VALIDATION_ERROR', 'Format permintaan tidak valid.')
     }
 
-    const message = typeof body?.message === 'string' ? body.message.trim() : ''
-    if (message.length < 1 || message.length > 1000) {
-      return errorResponse(
-        400,
-        'VALIDATION_ERROR',
-        'Pesan harus 1-1000 karakter.',
-      )
-    }
-
     const mode = body.mode ?? 'free'
     if (!MODES.includes(mode)) {
       return errorResponse(400, 'VALIDATION_ERROR', 'Mode tidak valid.')
+    }
+
+    const message = typeof body?.message === 'string' ? body.message.trim() : ''
+    let validatedImage: MealImageInput | undefined
+
+    if (mode === 'meal_analysis') {
+      if (message.length > 1000) {
+        return errorResponse(
+          400,
+          'VALIDATION_ERROR',
+          'Catatan makanan maksimal 1000 karakter.',
+        )
+      }
+      const imgResult = validateMealImageInput(body?.image)
+      if (!imgResult.ok) {
+        return errorResponse(400, 'VALIDATION_ERROR', imgResult.error)
+      }
+      validatedImage = imgResult.value
+    } else {
+      if (body?.image !== undefined && body?.image !== null) {
+        return errorResponse(
+          400,
+          'VALIDATION_ERROR',
+          'Gambar hanya didukung pada mode analisis makanan.',
+        )
+      }
+      if (message.length < 1 || message.length > 1000) {
+        return errorResponse(
+          400,
+          'VALIDATION_ERROR',
+          'Pesan harus 1-1000 karakter.',
+        )
+      }
     }
 
     const contextArticleId = body.context_article_id ?? null
@@ -128,10 +159,13 @@ Deno.serve(async (req) => {
     const level = safetyCheck.level
     const banner = getBanner(level)
     
-    if (level === 'crisis') {
+    if (level === 'crisis' || (mode === 'meal_analysis' && level === 'severe')) {
       const now = Date.now()
-            const crisisReplyText = CRISIS_REPLY_TEXT
-      
+      const safetyReplyText =
+        level === 'crisis' ? CRISIS_REPLY_TEXT : SEVERE_MEAL_SAFETY_REPLY
+      const safeUserContent =
+        mode === 'meal_analysis' ? message || '[Foto Makanan]' : message
+
       // created_at dibuat eksplisit supaya urutan riwayat pasti (user dulu, lalu model)
       const { data: saved, error: saveError } = await admin
         .from('chat_messages')
@@ -139,16 +173,16 @@ Deno.serve(async (req) => {
           {
             user_id: user.id,
             role: 'user',
-            content: message,
-            flag_level: 'crisis',
+            content: safeUserContent,
+            flag_level: level,
             created_at: new Date(now).toISOString(),
           },
           {
             user_id: user.id,
             role: 'model',
-            content: crisisReplyText,
-            flag_level: 'crisis',
-            meta: { card: null, sources: [] },
+            content: safetyReplyText,
+            flag_level: level,
+            meta: { card: null, meal_analysis: null, sources: [] },
             created_at: new Date(now + 1).toISOString(),
           },
         ])
@@ -157,14 +191,16 @@ Deno.serve(async (req) => {
 
       return json({
         user_message_id: saved!.find((m) => m.role === 'user')!.id,
+        user_message_content: safeUserContent,
         reply: {
           id: saved!.find((m) => m.role === 'model')!.id,
-          text: crisisReplyText,
+          text: safetyReplyText,
           card: null,
+          meal_analysis: null,
           sources: [],
           suggested_action: null,
         },
-        flag: { level: 'crisis', banner },
+        flag: { level, banner },
         usage: { remaining_this_hour: remaining },
       })
     }
@@ -175,7 +211,7 @@ Deno.serve(async (req) => {
     // 6. Call Gemini/LLM
     let llmResponse
     try {
-      llmResponse = await callLLM(message, context, mode, tasks)
+      llmResponse = await callLLM(message, context, mode, tasks, validatedImage)
     } catch (error: any) {
       if (error.message === 'LLM_UNAVAILABLE') {
         return errorResponse(
@@ -187,6 +223,10 @@ Deno.serve(async (req) => {
       throw error
     }
 
+    const savedUserContent =
+      mode === 'meal_analysis'
+        ? formatMealUserContent(llmResponse.meal_analysis ?? null, message)
+        : message
 
     // 8. Save messages
     const now = Date.now()
@@ -196,7 +236,7 @@ Deno.serve(async (req) => {
         {
           user_id: user.id,
           role: 'user',
-          content: message,
+          content: savedUserContent,
           flag_level: level,
           created_at: new Date(now).toISOString(),
         },
@@ -205,7 +245,11 @@ Deno.serve(async (req) => {
           role: 'model',
           content: llmResponse.text,
           flag_level: level,
-          meta: { card: llmResponse.card, sources: llmResponse.sources },
+          meta: {
+            card: llmResponse.card,
+            meal_analysis: llmResponse.meal_analysis ?? null,
+            sources: llmResponse.sources,
+          },
           created_at: new Date(now + 1).toISOString(),
         },
       ])
@@ -216,10 +260,12 @@ Deno.serve(async (req) => {
     // 8. Return response
     return json({
       user_message_id: savedMsgs!.find((m) => m.role === 'user')!.id,
+      user_message_content: savedUserContent,
       reply: {
         id: savedMsgs!.find((m) => m.role === 'model')!.id,
         text: llmResponse.text,
         card: llmResponse.card,
+        meal_analysis: llmResponse.meal_analysis ?? null,
         sources: llmResponse.sources,
         suggested_action: null,
       },
