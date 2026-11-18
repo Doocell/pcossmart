@@ -43,7 +43,7 @@ export default function LoginPage() {
       } else {
         setError(
           err.message ||
-            "Gagal menghubungkan Google OAuth. Pastikan provider Google sudah diaktifkan di Supabase Dashboard."
+          "Gagal menghubungkan Google OAuth. Pastikan provider Google sudah diaktifkan di Supabase Dashboard."
         );
       }
     }
@@ -151,11 +151,10 @@ export default function LoginPage() {
                   placeholder="nadia.paramitha@example.com"
                   required
                   aria-invalid={Boolean(error)}
-                  className={`w-full h-[52px] rounded-full px-space-lg pr-12 text-on-surface font-body-md text-body-md focus:outline-none transition-all duration-200 ${
-                    error
+                  className={`w-full h-[52px] rounded-full px-space-lg pr-12 text-on-surface font-body-md text-body-md focus:outline-none transition-all duration-200 ${error
                       ? "bg-error-container/20 focus:bg-surface-container-lowest focus:shadow-[0_0_0_3px_rgba(186,26,26,0.15)]"
                       : "bg-surface-container-low focus:bg-surface-container-lowest focus:shadow-[0_0_0_3px_rgba(108,74,182,0.15)]"
-                  }`}
+                    }`}
                 />
                 {error && (
                   <div className="absolute inset-y-0 right-0 pr-space-md flex items-center pointer-events-none text-error">
