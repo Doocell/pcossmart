@@ -624,29 +624,24 @@ export default function HistoryPage() {
         <div className="max-w-[880px] w-full mx-auto bg-surface-container-lowest rounded-3xl p-4 sm:p-10 md:p-12 shadow-[0_12px_40px_rgba(31,25,39,0.06)] border border-surface-container-highest print:shadow-none print:border-none print:p-0 flex flex-col gap-6 sm:gap-8">
           {/* Document Header */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b-2 border-surface-container-highest">
-            <div className="flex items-start gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-primary-container text-on-primary flex items-center justify-center shrink-0 shadow-xs">
-                <span className="material-symbols-rounded text-[26px]">
-                  clinical_notes
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <img
+                  src="/logopcos.png"
+                  alt="PCOSmart — Better Understanding, Better Living"
+                  className="h-9 sm:h-10 w-auto object-contain select-none"
+                />
+                <span className="px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-[11px] font-bold uppercase tracking-wider">
+                  Ringkasan Pasien Mandiri
                 </span>
               </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-headline-sm text-headline-sm font-extrabold text-primary tracking-tight">
-                    PCOSmart
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-[11px] font-bold uppercase tracking-wider">
-                    Ringkasan Pasien Mandiri
-                  </span>
-                </div>
-                <h1 className="text-[22px] sm:text-[24px] font-extrabold text-on-surface tracking-tight leading-snug">
-                  Ringkasan Observasi Siklus & Gejala Harian
-                </h1>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">
-                  Laporan terstruktur untuk membantu anamnesis dokter spesialis
-                  Obstetri & Ginekologi (Sp.OG).
-                </p>
-              </div>
+              <h1 className="text-[22px] sm:text-[24px] font-extrabold text-on-surface tracking-tight leading-snug">
+                Ringkasan Observasi Siklus & Gejala Harian
+              </h1>
+              <p className="font-body-sm text-body-sm text-on-surface-variant">
+                Laporan terstruktur untuk membantu anamnesis dokter spesialis
+                Obstetri & Ginekologi (Sp.OG).
+              </p>
             </div>
 
             <div className="flex flex-col sm:items-end text-left sm:text-right font-body-sm text-body-sm text-on-surface-variant shrink-0 bg-surface-container-low px-4 py-2.5 rounded-2xl border border-surface-container-highest">

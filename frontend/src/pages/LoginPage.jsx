@@ -81,12 +81,14 @@ export default function LoginPage() {
         <div className="w-full max-w-[440px] bg-surface-container-lowest rounded-lg p-5 sm:p-[40px] shadow-[0_8px_32px_-4px_rgba(108,74,182,0.08),0_2px_8px_-1px_rgba(108,74,182,0.04)] flex flex-col transition-all duration-300">
           {/* Header Title & Subtitle */}
           <div className="flex flex-col mb-space-lg text-left">
-            <div className="inline-flex items-center gap-space-xs text-primary mb-space-xs">
-              <span className="material-symbols-outlined text-[20px] fill-1">spa</span>
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-primary font-bold">
-                Akses Akun
-              </span>
-            </div>
+            <img
+              src="/logopcos.png"
+              alt="PCOSmart — Better Understanding, Better Living"
+              className="h-9 sm:h-10 w-auto object-contain self-start mb-space-sm select-none"
+            />
+            <span className="font-label-sm text-label-sm uppercase tracking-wider text-primary font-bold mb-space-xs">
+              Akses Akun
+            </span>
             <h1 className="font-headline-md text-headline-md text-on-surface tracking-tight mb-space-xs">
               Selamat Datang Kembali
             </h1>

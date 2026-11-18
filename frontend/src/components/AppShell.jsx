@@ -85,18 +85,12 @@ export default function AppShell({ children }) {
       {/* Desktop Sidebar (Matches Stitch 260px fixed sidebar) */}
       <aside className="print:hidden hidden lg:flex fixed left-0 top-0 h-screen w-[260px] bg-surface-container-low z-50 flex-col justify-between p-space-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
         <div className="flex flex-col gap-space-md">
-          <div className="flex items-center gap-space-sm px-2 py-1">
-            <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary">
-              <span className="material-symbols-rounded text-[22px]">spa</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-headline-sm text-headline-sm text-primary leading-tight">
-                PCOSmart
-              </span>
-              <span className="font-label-sm text-label-sm text-on-surface-variant leading-tight">
-                Sahabat Siklus
-              </span>
-            </div>
+          <div className="flex items-center px-2 py-1">
+            <img
+              src="/logopcos.png"
+              alt="PCOSmart — Better Understanding, Better Living"
+              className="h-11 w-auto max-w-full object-contain select-none"
+            />
           </div>
 
           <nav className="flex flex-col gap-1">
@@ -191,11 +185,14 @@ export default function AppShell({ children }) {
                 </h1>
               </div>
             ) : (
-              <div className="flex flex-col justify-center min-w-0 pr-space-sm">
-                <span className="font-label-sm text-label-sm text-secondary font-semibold uppercase tracking-wider leading-none">
-                  PCOSmart
-                </span>
-                <h1 className="font-headline-sm text-headline-sm text-on-surface font-semibold truncate leading-tight mt-0.5">
+              <div className="flex items-center gap-2 min-w-0 pr-space-xs">
+                <img
+                  src="/logopcos.png"
+                  alt="PCOSmart"
+                  className="h-6 sm:h-7 w-auto object-contain shrink-0 select-none"
+                />
+                <span className="w-px h-4 bg-outline-variant/60 shrink-0" aria-hidden="true" />
+                <h1 className="font-label-lg sm:font-headline-sm text-label-lg sm:text-headline-sm text-on-surface font-semibold truncate leading-tight">
                   {mobileMeta.title}
                 </h1>
               </div>

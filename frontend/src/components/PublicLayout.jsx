@@ -28,18 +28,12 @@ export function PublicHeader({ onOpenInfo }) {
   return (
     <header className="w-full pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(108,74,182,0.04)] sticky top-0 z-40">
       <div className="h-16 max-w-7xl mx-auto px-margin lg:px-margin-desktop flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-space-sm group">
-          <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary shadow-sm group-hover:scale-105 transition-transform">
-            <span className="material-symbols-outlined text-[20px]">spa</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-headline-sm text-headline-sm tracking-tight text-primary leading-none">
-              PCOSmart
-            </span>
-            <span className="font-label-sm text-label-sm text-on-surface-variant leading-none mt-0.5">
-              Sahabat Hormonmu
-            </span>
-          </div>
+        <Link to="/" className="flex items-center shrink-0 group py-1">
+          <img
+            src="/logopcos.png"
+            alt="PCOSmart — Better Understanding, Better Living"
+            className="h-8 sm:h-10 w-auto object-contain select-none group-hover:scale-[1.02] transition-transform"
+          />
         </Link>
 
         <div className="flex items-center gap-space-md">
@@ -64,12 +58,14 @@ export function PublicHeader({ onOpenInfo }) {
   );
 }
 
+const COPYRIGHT_YEAR = Math.max(2026, new Date().getFullYear());
+
 export function PublicFooter({ onOpenInfo }) {
   return (
     <footer className="w-full bg-surface-container-low pt-space-md pb-[max(1rem,env(safe-area-inset-bottom,0px))] shadow-[0_-1px_6px_rgba(108,74,182,0.02)]">
       <div className="max-w-7xl mx-auto px-margin lg:px-margin-desktop flex flex-col sm:flex-row items-center justify-between gap-space-xs text-center sm:text-left">
         <p className="font-label-sm text-label-sm text-on-surface-variant">
-          © 2024 PCOSmart Indonesia. Ruang aman dan suportif kesehatan reproduksi wanita.
+          © {COPYRIGHT_YEAR} PCOSmart Indonesia. Ruang aman dan suportif kesehatan reproduksi wanita.
         </p>
         <div className="flex items-center gap-space-md font-label-sm text-label-sm text-on-surface-variant">
           <button

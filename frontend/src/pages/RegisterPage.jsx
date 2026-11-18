@@ -106,16 +106,13 @@ export default function RegisterPage() {
         <div className="absolute -top-12 -left-16 w-80 h-80 rounded-full bg-primary-fixed/30 blur-3xl pointer-events-none" />
         <div className="absolute top-1/2 -right-20 w-96 h-96 rounded-full bg-secondary-container/25 blur-3xl pointer-events-none" />
 
-        {/* Micro Brand Tagline Overline */}
-        <div className="mb-space-md text-center max-w-md">
-          <div className="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container/70 shadow-sm backdrop-blur-sm">
-            <span className="material-symbols-outlined text-[16px] text-primary fill-1">spa</span>
-            <span className="font-label-md text-label-md text-primary">PCOSmart</span>
-            <span className="text-outline-variant font-body-sm">•</span>
-            <span className="font-label-sm text-label-sm text-on-surface-variant">
-              Sahabat Siklus & Keseimbangan Tubuhmu
-            </span>
-          </div>
+        {/* Brand Logo Header */}
+        <div className="mb-space-md flex flex-col items-center text-center max-w-md">
+          <img
+            src="/logopcos.png"
+            alt="PCOSmart — Better Understanding, Better Living"
+            className="h-9 sm:h-11 w-auto mx-auto object-contain select-none"
+          />
         </div>
 
         {/* Main Sign-up Card Container (Max 440px) */}

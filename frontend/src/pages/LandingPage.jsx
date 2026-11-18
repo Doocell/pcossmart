@@ -156,19 +156,11 @@ export default function LandingPage() {
                 <div>
                   {/* Top Branding Header */}
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-6 sm:mb-8">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full bg-primary-container flex items-center justify-center text-on-primary shadow-sm">
-                        <span className="material-symbols-outlined text-[24px]">spa</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-headline-sm text-headline-sm text-primary tracking-tight font-bold">
-                          PCOSmart
-                        </span>
-                        <span className="font-label-sm text-label-sm text-on-surface-variant">
-                          Sahabat Kesehatan Reproduksi
-                        </span>
-                      </div>
-                    </div>
+                    <img
+                      src="/logopcos.png"
+                      alt="PCOSmart — Better Understanding, Better Living"
+                      className="h-9 sm:h-11 w-auto object-contain shrink-0 select-none"
+                    />
 
                     {/* Soft Pill Badge */}
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm font-semibold">

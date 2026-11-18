@@ -30,7 +30,7 @@ const SEEDED_ARTICLES = [
     read_minutes: 5,
     author: "dr. Amanda Sp.OG",
     reviewer: "Ditinjau Tim Medis PCOSmart",
-    published_date: "20 Oktober 2024",
+    published_date: "20 Oktober 2026",
     image_url:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCTCAsud9IOMJ6ZR8DrdQSSwxF0C9tx8PUViUFCKTW9lZtnBRmao1RcTwJmboQqMGS8mxb6jc9WjT0DgEEJWiVoMNbU6zoYHFXdp4BoiHcE89tcj6eu7h0HdJSfyUn7pL77WK987a7pWhF1r-qsDutWK3kL1QWEgfGv5sl6jVYK3SwkBlEPCgEb35O5DWvx7Z7AglQRZRxYgGK_NDjw7hdb4t7IyPihVC19Fd_S3cM-",
     tags: ["#ResistensiInsulin", "#GulaDarah", "#HormonAndrogen", "#PolaMakanSeimbang"],
@@ -53,7 +53,7 @@ const SEEDED_ARTICLES = [
     read_minutes: 6,
     author: "dr. Ratna Kartika, Sp.OG",
     reviewer: "Ditinjau Tim Medis PCOSmart",
-    published_date: "18 Oktober 2024",
+    published_date: "18 Oktober 2026",
     image_url:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuB3ojbO2m1d87gwTgsZVFLn3uGoukVi2QMhdMJaAXxAD0ZvdoYz3qJbzmHlOuRzeAqG9Qtv6ULTbvjOxBO83f3CPPH-FY-055DCh2fdGyZHQ8M_th5BcIUoJ1fBHsTrRZXzx-mtwqT2QhhAu76BjaSNVitlInxjPzAcYb5IA2rSpahAvYOi8sa5e422p8BrjqIqmxJUOitg_V41xU2TiIHpEBEE2Mvo4YDooeTrUNCh",
     tags: ["#ApaItuPCOS", "#KenaliTubuhmu", "#EdukasiDasar", "#SiklusHaid"],
@@ -76,7 +76,7 @@ const SEEDED_ARTICLES = [
     read_minutes: 4,
     author: "dr. Nadia Kusuma, Sp.KO",
     reviewer: "Ditinjau Tim Medis PCOSmart",
-    published_date: "15 Oktober 2024",
+    published_date: "15 Oktober 2026",
     image_url:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuBkLA8jicExGY8bNKyZpMpS1zfxvBBY6uDLsXCgkDdvsTvgUEJZRmhz48LdM8Pms1Uw-V8Dm1y0kTxXtxqrdQ3dFmaVvVJS42KCVHaLK7tsUo7q5pDM7zQv1WQe4kFFUplQzOqNWVKd33Z6WEuRAgSh6O4nKhT1-mHT1fbuUJ8INRjBAmT6iQabyB8-GVbHByfhrYadHMK0_OBQvAh7D7NxTDjAYohZo5UXgypI9gw8",
     tags: ["#AktivitasFisik", "#ManajemenKortisol", "#YogaPCOS", "#JalanSantai"],
@@ -100,7 +100,7 @@ const SEEDED_ARTICLES = [
     read_minutes: 5,
     author: "dr. Amanda Sp.OG",
     reviewer: "Ditinjau Tim Medis PCOSmart",
-    published_date: "12 Oktober 2024",
+    published_date: "12 Oktober 2026",
     image_url:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuC9uGMK9ns4Swnn9tLBywoPeqgItB1prtG0qT247EYejTLAq-3vhsP742IIQ_UI88pbP0dDyTMNX6loJXszbuNeHjtxK9b3x4JaACr805ckoxoxJED6Z4M-x3l-xcXwRv8Zco5huW58JayOXP8UJITVTN6bPRRqW9ogqYHhzOca33jXW2Xdye3xrUgyGH5r5nGM9a2KPFM16DDm5zGjN7Ode7bzekOqx7PrFmy7nVaz",
     tags: ["#RitmeSirkadian", "#KualitasTidur", "#ManajemenStres", "#TehSpearmint"],
@@ -124,7 +124,7 @@ const SEEDED_ARTICLES = [
     read_minutes: 5,
     author: "Sari Pramesti, S.Gz, RD",
     reviewer: "Ditinjau Tim Medis PCOSmart",
-    published_date: "08 Oktober 2024",
+    published_date: "08 Oktober 2026",
     image_url:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuA-mh8w7AFKTvFw3xRluvTkpZg_U69_Ls_pndW-1f7Sa_ymAj16K5EU5Uy25YFZUDFzNwfxQbb7AEkv0CI3ijydJ2pzxOWtTW4PqeIKXR6gkAeJ4zmWsH2hcFmputZmU1Cq_F6B2xxdvUtGMrHkGBZM4CLF702RsKjoYY0PakSxI0owxdmpeUEVo9FikUuPzgKc2k7acpbFrOgeubo9FZ423rkr5tdMuuuwmKuyQmyA",
     tags: ["#NutrisiRamahHormon", "#PiringSeimbang", "#CamilanSehat", "#Omega3"],
@@ -148,7 +148,7 @@ const SEEDED_ARTICLES = [
     read_minutes: 4,
     author: "dr. Amanda Sp.OG",
     reviewer: "Ditinjau Tim Medis PCOSmart",
-    published_date: "04 Oktober 2024",
+    published_date: "04 Oktober 2026",
     image_url:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCTCAsud9IOMJ6ZR8DrdQSSwxF0C9tx8PUViUFCKTW9lZtnBRmao1RcTwJmboQqMGS8mxb6jc9WjT0DgEEJWiVoMNbU6zoYHFXdp4BoiHcE89tcj6eu7h0HdJSfyUn7pL77WK987a7pWhF1r-qsDutWK3kL1QWEgfGv5sl6jVYK3SwkBlEPCgEb35O5DWvx7Z7AglQRZRxYgGK_NDjw7hdb4t7IyPihVC19Fd_S3cM-",
     tags: ["#KapanKeDokter", "#KonsultasiSpOG", "#TandaWaspada", "#EvaluasiKlinis"],

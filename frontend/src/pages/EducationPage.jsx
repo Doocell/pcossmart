@@ -510,7 +510,7 @@ export default function EducationPage() {
                     </div>
                     <div className="flex items-center gap-2 text-[12px] text-on-surface-variant font-medium">
                       <span>
-                        {activeArticle.published_date || "20 Oktober 2024"}
+                        {activeArticle.published_date || "20 Oktober 2026"}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import LandingPage from "./pages/LandingPage";
@@ -14,7 +13,6 @@ import HistoryPage from "./pages/HistoryPage";
 import EducationPage from "./pages/EducationPage";
 import ProfilePage from "./pages/ProfilePage";
 import AppShell from "./components/AppShell";
-import DevPreviewBar from "./components/DevPreviewBar";
 
 function LoadingScreen() {
   return (
@@ -29,37 +27,32 @@ function LoadingScreen() {
   );
 }
 
-function PublicOnlyRoute({ children, previewBypass }) {
+function PublicOnlyRoute({ children }) {
   const { user, loading, needsOnboarding } = useAuth();
   if (loading) return <LoadingScreen />;
-  if (user && !previewBypass) {
+  if (user) {
     return <Navigate to={needsOnboarding ? "/onboarding" : "/dashboard"} replace />;
   }
   return children;
 }
 
-function OnboardingRoute({ children, previewBypass }) {
+function OnboardingRoute({ children }) {
   const { user, loading, needsOnboarding } = useAuth();
   if (loading) return <LoadingScreen />;
-  if (previewBypass) return children;
   if (!user) return <Navigate to="/login" replace />;
   if (!needsOnboarding) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
-function ProtectedRoute({ children, previewBypass }) {
+function ProtectedRoute({ children }) {
   const { user, loading, needsOnboarding } = useAuth();
   if (loading) return <LoadingScreen />;
-  if (!previewBypass) {
-    if (!user) return <Navigate to="/login" replace />;
-    if (needsOnboarding) return <Navigate to="/onboarding" replace />;
-  }
+  if (!user) return <Navigate to="/login" replace />;
+  if (needsOnboarding) return <Navigate to="/onboarding" replace />;
   return <AppShell>{children}</AppShell>;
 }
 
 export default function App() {
-  const [previewBypass, setPreviewBypass] = useState(false);
-
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -67,7 +60,7 @@ export default function App() {
           <Route
             path="/"
             element={
-              <PublicOnlyRoute previewBypass={previewBypass}>
+              <PublicOnlyRoute>
                 <LandingPage />
               </PublicOnlyRoute>
             }
@@ -75,7 +68,7 @@ export default function App() {
           <Route
             path="/login"
             element={
-              <PublicOnlyRoute previewBypass={previewBypass}>
+              <PublicOnlyRoute>
                 <LoginPage />
               </PublicOnlyRoute>
             }
@@ -83,7 +76,7 @@ export default function App() {
           <Route
             path="/register"
             element={
-              <PublicOnlyRoute previewBypass={previewBypass}>
+              <PublicOnlyRoute>
                 <RegisterPage />
               </PublicOnlyRoute>
             }
@@ -94,7 +87,7 @@ export default function App() {
           <Route
             path="/onboarding"
             element={
-              <OnboardingRoute previewBypass={previewBypass}>
+              <OnboardingRoute>
                 <OnboardingPage />
               </OnboardingRoute>
             }
@@ -103,7 +96,7 @@ export default function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute previewBypass={previewBypass}>
+              <ProtectedRoute>
                 <DashboardPage />
               </ProtectedRoute>
             }
@@ -111,7 +104,7 @@ export default function App() {
           <Route
             path="/checkin"
             element={
-              <ProtectedRoute previewBypass={previewBypass}>
+              <ProtectedRoute>
                 <CheckinPage />
               </ProtectedRoute>
             }
@@ -119,7 +112,7 @@ export default function App() {
           <Route
             path="/chat"
             element={
-              <ProtectedRoute previewBypass={previewBypass}>
+              <ProtectedRoute>
                 <ChatPage />
               </ProtectedRoute>
             }
@@ -127,7 +120,7 @@ export default function App() {
           <Route
             path="/history"
             element={
-              <ProtectedRoute previewBypass={previewBypass}>
+              <ProtectedRoute>
                 <HistoryPage />
               </ProtectedRoute>
             }
@@ -135,7 +128,7 @@ export default function App() {
           <Route
             path="/education"
             element={
-              <ProtectedRoute previewBypass={previewBypass}>
+              <ProtectedRoute>
                 <EducationPage />
               </ProtectedRoute>
             }
@@ -143,7 +136,7 @@ export default function App() {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute previewBypass={previewBypass}>
+              <ProtectedRoute>
                 <ProfilePage />
               </ProtectedRoute>
             }
@@ -151,8 +144,6 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-
-        {import.meta.env.DEV && <DevPreviewBar setPreviewBypass={setPreviewBypass} />}
       </BrowserRouter>
     </AuthProvider>
   );

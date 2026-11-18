@@ -32,15 +32,16 @@ function getInitials(name = "Nadia") {
 }
 
 function formatJoinDate(isoString) {
-  if (!isoString) return "12 Agustus 2024";
+  const formatter = new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  if (!isoString) return formatter.format(new Date());
   try {
-    return new Intl.DateTimeFormat("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(new Date(isoString));
+    return formatter.format(new Date(isoString));
   } catch {
-    return "12 Agustus 2024";
+    return formatter.format(new Date());
   }
 }
 
@@ -1031,25 +1032,15 @@ export default function ProfilePage() {
                 <div className="absolute right-40 -bottom-20 w-72 h-72 rounded-full bg-primary-fixed/20 blur-3xl pointer-events-none" />
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-4 border-b border-surface-container-high relative z-10">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-container to-primary flex items-center justify-center text-white shadow-lg shadow-primary/25 shrink-0">
-                      <span className="material-symbols-rounded text-[34px]">
-                        local_florist
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
-                        <span className="font-headline-sm text-headline-sm font-extrabold text-on-surface tracking-tight">
-                          PCOSmart
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-secondary-container/60 text-secondary font-label-sm text-label-sm font-bold">
-                          Ekosistem FemTech
-                        </span>
-                      </div>
-                      <p className="font-body-md text-body-md text-on-surface-variant mt-0.5 font-medium">
-                        Sahabat Siklus & Keseimbangan Hormon
-                      </p>
-                    </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <img
+                      src="/logopcos.png"
+                      alt="PCOSmart — Better Understanding, Better Living"
+                      className="h-11 sm:h-13 w-auto object-contain select-none"
+                    />
+                    <span className="px-3 py-1 rounded-full bg-secondary-container/60 text-secondary font-label-sm text-label-sm font-bold shrink-0">
+                      Ekosistem FemTech
+                    </span>
                   </div>
 
                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-high text-on-surface self-start sm:self-center">
